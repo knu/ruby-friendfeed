@@ -153,8 +153,8 @@ module FriendFeed
       call_api('profiles', 'nickname' => usernames.join(','))['profiles']
     end
 
-    def get_real_friends
-      get_profiles(get_profile['subscriptions'].map { |subscription|
+    def get_real_friends(username = @username)
+      get_profiles(get_profile(@username)['subscriptions'].map { |subscription|
         subscription['nickname']
       })
     end
