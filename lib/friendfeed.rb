@@ -163,7 +163,7 @@ module FriendFeed
         'service' => 'twitter','username' => twitter_name)
     end
 
-    def unsubscribe_user(username)
+    def unsubscribe_from_user(username)
       post(ROOT_URI + '/a/userunsubscribe', 'user' => username)
     end
   end
