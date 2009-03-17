@@ -36,11 +36,11 @@ module FriendFeed
 
     public
 
-    # Performs a login with a +username+ and +remote key+.  This
-    # enables call of any official API.  It is not needed to call this
-    # method if you have called login(), which internally obtains a
-    # remote key and calls this method.  An exception is raised if
-    # authentication fails.
+    # Performs a login with a +username+ and +remote key+ and returns
+    # self.  This enables call of any official API.  It is not needed
+    # to call this method if you have called login(), which internally
+    # obtains a remote key and calls this method.  An exception is
+    # raised if authentication fails.
     def api_login(username, remote_key)
       @username = username
       @remote_key = remote_key
@@ -99,8 +99,9 @@ module FriendFeed
 
     public
 
-    # Performs a login with a +username+ and +password+.  This enables
-    # call of any API, including both official API and unofficial API.
+    # Performs a login with a +username+ and +password+ and returns
+    # self.  This enables call of any API, including both official API
+    # and unofficial API.
     def login(username, password)
       @username = username
       @password = password
