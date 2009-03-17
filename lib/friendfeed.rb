@@ -19,7 +19,7 @@ module FriendFeed
     LOGIN_URI     = ROOT_URI + "/account/login"
     IMAGINARY_URI = ROOT_URI + "/settings/imaginary?num=9999"
 
-    attr_reader :username, :password, :remote_key
+    attr_reader :username
 
     def initialize
       @agent = nil
