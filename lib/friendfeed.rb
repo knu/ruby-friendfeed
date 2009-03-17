@@ -124,8 +124,8 @@ module FriendFeed
           'profileUrl' => profile_uri.to_s,
           'services' => profile_page.parser.xpath("//div[@class='servicefilter']//a[@class='l_filterservice']").map { |service_a|
             {
-              'name', service_a['servicename'],
-              'profileUrl', (profile_uri + service_a['href']).to_s
+              'name' => service_a['servicename'],
+              'profileUrl' => (profile_uri + service_a['href']).to_s
             }
           },
         }
