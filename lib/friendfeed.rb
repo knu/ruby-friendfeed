@@ -183,6 +183,12 @@ module FriendFeed
       post(ROOT_URI + '/a/createimaginary', 'name' => username).xpath("//a[@class='l_userunsubscribe']/@uid").to_s
     end
 
+    # Renames an imaginary friend specified by a unique ID to a given
+    # +username+. [unofficial]
+    def rename_imaginary_friend(id, username)
+      post(ROOT_URI + '/a/imaginaryname', 'user' => id, 'name' => username)
+    end
+
     # Adds a Twitter service to an imaginary friend specified by a
     # unique ID. [unofficial]
     def add_twitter_to_imaginary_friend(id, twitter_name)
