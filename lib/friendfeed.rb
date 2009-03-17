@@ -21,15 +21,28 @@ module FriendFeed
 
     attr_reader :username, :password, :remote_key
 
-    def initialize(username, password)
+    def initialize
+      @agent = nil
+      @api_agent = nil
+    end
+
+    private
+
+    def get_agent
+      @agent or raise 'login() must be called first to use this feature'
+    end
+
+    def get_api_agent
+      @api_agent or raise 'login() or api_login() must be called first to use this feature'
+    end
+
+    public
+
+    def login(username, password)
       @username = username
       @password = password
       @agent = WWW::Mechanize.new
-      @api_agent = WWW::Mechanize.new
-      login
-    end
 
-    def login
       page = @agent.get(LOGIN_URI)
 
       login_form = page.forms.find { |form|
@@ -45,17 +58,28 @@ module FriendFeed
       } and raise 'Login failed'
 
       page = @agent.get(ROOT_URI + "/account/api")
-      @remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
+      remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
+
+      api_login(username, remote_key)
+    end
+
+    def api_login(username, remote_key)
+      @username = username
+      @remote_key = remote_key
+      @api_agent = WWW::Mechanize.new
       @api_agent.auth(@username, @remote_key)
+      validate
 
       self
     end
 
     def get_imaginary_friends
-      page = @agent.get(IMAGINARY_URI)
+      agent = get_agent()
+
+      page = agent.get(IMAGINARY_URI)
       page.parser.xpath("//div[@class='name']//a[@class='l_person']").map { |person_a|
         profile_uri = IMAGINARY_URI + person_a['href']
-        profile_page = @agent.get(profile_uri)
+        profile_page = agent.get(profile_uri)
         {
           'id' => person_a['uid'], 
           'nickname' => person_a.text,
@@ -71,8 +95,10 @@ module FriendFeed
     end
 
     def post(uri, query = {})
-      page = @agent.post(uri, {
-          'at' => @agent.cookies.find { |cookie|
+      agent = get_agent()
+
+      page = agent.post(uri, {
+          'at' => agent.cookies.find { |cookie|
             cookie.domain == 'friendfeed.com' && cookie.name == 'AT'
           }.value
         }.merge(query))
@@ -104,13 +130,19 @@ module FriendFeed
     end
 
     def call_api(path, parameters = nil)
+      api_agent = get_api_agent()
+
       uri = ROOT_URI + "/api/" + path
       if parameters
         uri.query = parameters.map { |key, value|
           URI.encode(key) + "=" + URI.encode(value)
         }.join('&')
       end
-      JSON.parse(@api_agent.get_file(uri))
+      JSON.parse(api_agent.get_file(uri))
+    end
+
+    def validate
+      call_api('validate')
     end
 
     def get_profile(username = @username)
