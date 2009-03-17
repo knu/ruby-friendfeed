@@ -16,6 +16,7 @@ require 'uri'
 module FriendFeed
   ROOT_URI      = URI.parse("https://friendfeed.com/")
 
+  # Client library for FriendFeed API.
   class Client
     attr_reader :username
 
@@ -29,8 +30,17 @@ module FriendFeed
       @api_agent or raise 'login() or api_login() must be called first to use this feature'
     end
 
+    def validate
+      call_api('validate')
+    end
+
     public
 
+    # Performs a login with a +username+ and +remote key+.  This
+    # enables call of any official API.  It is not needed to call this
+    # method if you have called login(), which internally obtains a
+    # remote key and calls this method.  An exception is raised if
+    # authentication fails.
     def api_login(username, remote_key)
       @username = username
       @remote_key = remote_key
@@ -41,6 +51,8 @@ module FriendFeed
       self
     end
 
+    # Calls an official API specified by a +path+ with optional
+    # parameters, and returns an object parsed from a JSON response.
     def call_api(path, parameters = nil)
       api_agent = get_api_agent()
 
@@ -53,18 +65,19 @@ module FriendFeed
       JSON.parse(api_agent.get_file(uri))
     end
 
-    def validate
-      call_api('validate')
-    end
-
+    # Gets profile information of a user, defaulted to the
+    # authenticated user, in hash.
     def get_profile(username = @username)
       call_api('user/%s/profile' % username)
     end
 
+    # Gets an array of profile information of users.
     def get_profiles(usernames)
       call_api('profiles', 'nickname' => usernames.join(','))['profiles']
     end
 
+    # Gets an array of profile information of users a user (defaulted
+    # to the authenticated user) is subscribing to.
     def get_real_friends(username = @username)
       get_profiles(get_profile(@username)['subscriptions'].map { |subscription|
           subscription['nickname']
@@ -86,6 +99,8 @@ module FriendFeed
 
     public
 
+    # Performs a login with a +username+ and +password+.  This enables
+    # call of any API, including both official API and unofficial API.
     def login(username, password)
       @username = username
       @password = password
@@ -111,6 +126,9 @@ module FriendFeed
       api_login(username, remote_key)
     end
 
+    # Gets an array of profile information of the authenticated user's
+    # imaginary friends, in a format similar to
+    # get_real_friends(). [unofficial]
     def get_imaginary_friends
       agent = get_agent()
 
@@ -132,6 +150,9 @@ module FriendFeed
       }
     end
 
+    # Posts a request to an internal API of FriendFeed and returns
+    # either a parser object for an HTML response or an object parsed
+    # from a JSON response).  [unofficial]
     def post(uri, query = {})
       agent = get_agent()
 
@@ -154,17 +175,23 @@ module FriendFeed
       end
     end
 
+    # Creates an imaginary friend of a given +username+ and returns a
+    # unique ID string on success.  Like other methods in general, an
+    # exception is raised on failure. [unofficial]
     def create_imaginary_friend(username)
       post(ROOT_URI + '/a/createimaginary', 'name' => username).xpath("//a[@class='l_userunsubscribe']/@uid").to_s
     end
 
+    # Adds a Twitter service to an imaginary friend specified by a
+    # unique ID. [unofficial]
     def add_twitter_to_imaginary_friend(id, twitter_name)
       post(ROOT_URI + '/a/configureservice', 'stream' => id,
         'service' => 'twitter','username' => twitter_name)
     end
 
-    def unsubscribe_from_user(username)
-      post(ROOT_URI + '/a/userunsubscribe', 'user' => username)
+    # Unsubscribe from a user specified by a unique ID. [unofficial]
+    def unsubscribe_from_user(id)
+      post(ROOT_URI + '/a/userunsubscribe', 'user' => id)
     end
   end
 end
