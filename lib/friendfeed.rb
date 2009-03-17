@@ -14,26 +14,74 @@ require 'mechanize'
 require 'uri'
 
 module FriendFeed
-  class Client
-    ROOT_URI      = URI.parse("https://friendfeed.com/")
-    LOGIN_URI     = ROOT_URI + "/account/login"
-    IMAGINARY_URI = ROOT_URI + "/settings/imaginary?num=9999"
+  ROOT_URI      = URI.parse("https://friendfeed.com/")
 
+  class Client
     attr_reader :username
 
-    def initialize
-      @agent = nil
-      @api_agent = nil
+    #
+    # Official API
+    #
+
+    private
+
+    def get_api_agent
+      @api_agent or raise 'login() or api_login() must be called first to use this feature'
     end
+
+    public
+
+    def api_login(username, remote_key)
+      @username = username
+      @remote_key = remote_key
+      @api_agent = WWW::Mechanize.new
+      @api_agent.auth(@username, @remote_key)
+      validate
+
+      self
+    end
+
+    def call_api(path, parameters = nil)
+      api_agent = get_api_agent()
+
+      uri = ROOT_URI + "/api/" + path
+      if parameters
+        uri.query = parameters.map { |key, value|
+          URI.encode(key) + "=" + URI.encode(value)
+        }.join('&')
+      end
+      JSON.parse(api_agent.get_file(uri))
+    end
+
+    def validate
+      call_api('validate')
+    end
+
+    def get_profile(username = @username)
+      call_api('user/%s/profile' % username)
+    end
+
+    def get_profiles(usernames)
+      call_api('profiles', 'nickname' => usernames.join(','))['profiles']
+    end
+
+    def get_real_friends(username = @username)
+      get_profiles(get_profile(@username)['subscriptions'].map { |subscription|
+          subscription['nickname']
+        })
+    end
+
+    #
+    # Unofficial API
+    #
+
+    LOGIN_URI     = ROOT_URI + "/account/login"
+    IMAGINARY_URI = ROOT_URI + "/settings/imaginary?num=9999"
 
     private
 
     def get_agent
       @agent or raise 'login() must be called first to use this feature'
-    end
-
-    def get_api_agent
-      @api_agent or raise 'login() or api_login() must be called first to use this feature'
     end
 
     public
@@ -61,16 +109,6 @@ module FriendFeed
       remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
 
       api_login(username, remote_key)
-    end
-
-    def api_login(username, remote_key)
-      @username = username
-      @remote_key = remote_key
-      @api_agent = WWW::Mechanize.new
-      @api_agent.auth(@username, @remote_key)
-      validate
-
-      self
     end
 
     def get_imaginary_friends
@@ -127,36 +165,6 @@ module FriendFeed
 
     def unsubscribe_user(username)
       post(ROOT_URI + '/a/userunsubscribe', 'user' => username)
-    end
-
-    def call_api(path, parameters = nil)
-      api_agent = get_api_agent()
-
-      uri = ROOT_URI + "/api/" + path
-      if parameters
-        uri.query = parameters.map { |key, value|
-          URI.encode(key) + "=" + URI.encode(value)
-        }.join('&')
-      end
-      JSON.parse(api_agent.get_file(uri))
-    end
-
-    def validate
-      call_api('validate')
-    end
-
-    def get_profile(username = @username)
-      call_api('user/%s/profile' % username)
-    end
-
-    def get_profiles(usernames)
-      call_api('profiles', 'nickname' => usernames.join(','))['profiles']
-    end
-
-    def get_real_friends(username = @username)
-      get_profiles(get_profile(@username)['subscriptions'].map { |subscription|
-        subscription['nickname']
-      })
     end
   end
 end
