@@ -24,10 +24,12 @@ module FriendFeed
     # Official API
     #
 
+    API_URI = ROOT_API + "/api/"
+
     private
 
     def get_api_agent
-      @api_agent or raise 'login() or api_login() must be called first to use this feature'
+      @api_agent ||= WWW::Mechanize.new
     end
 
     def validate
@@ -37,14 +39,15 @@ module FriendFeed
     public
 
     # Performs a login with a +username+ and +remote key+ and returns
-    # self.  This enables call of any official API.  It is not needed
-    # to call this method if you have called login(), which internally
-    # obtains a remote key and calls this method.  An exception is
-    # raised if authentication fails.
+    # self.  This enables call of any official API that requires
+    # authentication[6~.  It is not needed to call this method if you
+    # have called login(), which internally obtains a remote key and
+    # calls this method.  An exception is raised if authentication
+    # fails.
     def api_login(username, remote_key)
       @username = username
       @remote_key = remote_key
-      @api_agent = WWW::Mechanize.new
+      @api_agent = get_api_agent()
       @api_agent.auth(@username, @remote_key)
       validate
 
@@ -56,7 +59,7 @@ module FriendFeed
     def call_api(path, parameters = nil)
       api_agent = get_api_agent()
 
-      uri = ROOT_URI + "/api/" + path
+      uri = API_URI + path
       if parameters
         uri.query = parameters.map { |key, value|
           URI.encode(key) + "=" + URI.encode(value)
@@ -93,8 +96,8 @@ module FriendFeed
 
     private
 
-    def get_agent
-      @agent or raise 'login() must be called first to use this feature'
+    def get_login_agent
+      @login_agent or raise 'login() must be called first to use this feature'
     end
 
     public
@@ -105,9 +108,9 @@ module FriendFeed
     def login(username, password)
       @username = username
       @password = password
-      @agent = WWW::Mechanize.new
+      @login_agent = WWW::Mechanize.new
 
-      page = @agent.get(LOGIN_URI)
+      page = @login_agent.get(LOGIN_URI)
 
       login_form = page.forms.find { |form|
         LOGIN_URI + form.action == LOGIN_URI
@@ -115,13 +118,13 @@ module FriendFeed
 
       login_form.set_fields(:email => @username, :password => @password)
 
-      page = @agent.submit(login_form)
+      page = @login_agent.submit(login_form)
 
       login_form = page.forms.find { |form|
         LOGIN_URI + form.action == LOGIN_URI
       } and raise 'Login failed'
 
-      page = @agent.get(ROOT_URI + "/account/api")
+      page = @login_agent.get(ROOT_URI + "/account/api")
       remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
 
       api_login(username, remote_key)
@@ -131,7 +134,7 @@ module FriendFeed
     # imaginary friends, in a format similar to
     # get_real_friends(). [unofficial]
     def get_imaginary_friends
-      agent = get_agent()
+      agent = get_login_agent()
 
       page = agent.get(IMAGINARY_URI)
       page.parser.xpath("//div[@class='name']//a[@class='l_person']").map { |person_a|
@@ -155,7 +158,7 @@ module FriendFeed
     # either a parser object for an HTML response or an object parsed
     # from a JSON response).  [unofficial]
     def post(uri, query = {})
-      agent = get_agent()
+      agent = get_login_agent()
 
       page = agent.post(uri, {
           'at' => agent.cookies.find { |cookie|
