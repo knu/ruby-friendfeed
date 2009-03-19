@@ -71,6 +71,7 @@ module FriendFeed
     # Gets profile information of a user of a given +nickname+,
     # defaulted to the authenticated user, in hash.
     def get_profile(nickname = @nickname)
+      nickname or nickname_required
       call_api('user/%s/profile' % URI.encode(nickname))
     end
 
@@ -80,10 +81,11 @@ module FriendFeed
       call_api('profiles', 'nickname' => nicknames.join(','))['profiles']
     end
 
-    # Gets an array of profile information of users a user of a given
-    # +nickname+ (defaulted to the authenticated user) is subscribing
-    # to.
+    # Gets an array of profile information of friends of a user of a
+    # given +nickname+ (defaulted to the authenticated user) is
+    # subscribing to.
     def get_real_friends(nickname = @nickname)
+      nickname or raise 'nickname not given, nor logged in'
       get_profiles(get_profile(@nickname)['subscriptions'].map { |subscription|
           subscription['nickname']
         })
