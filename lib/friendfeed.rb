@@ -62,6 +62,10 @@ module FriendFeed
       uri = API_URI + path
       if parameters
         uri.query = parameters.map { |key, value|
+          case value
+          when Array
+            value = value.join(',')
+          end
           URI.encode(key) + "=" + URI.encode(value)
         }.join('&')
       end
@@ -78,7 +82,7 @@ module FriendFeed
     # Gets an array of profile information of users of given
     # +nicknames+.
     def get_profiles(nicknames)
-      call_api('profiles', 'nickname' => nicknames.join(','))['profiles']
+      call_api('profiles', 'nickname' => nicknames)['profiles']
     end
 
     # Gets an array of profile information of friends of a user of a
@@ -118,7 +122,7 @@ module FriendFeed
     # Gets an array of the most recent entries from users of given
     # +nicknames+.
     def get_multi_user_entries(nicknames)
-      call_api('feed/user', 'nickname' => nicknames.join(','))['entries']
+      call_api('feed/user', 'nickname' => nicknames)['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
@@ -172,12 +176,26 @@ module FriendFeed
     # Gets an array of entries of given +entryids+.  An exception is
     # raised when it fails.
     def get_entries(entryids)
-      call_api('feed/entry', 'entry_id' => entryids.join(','))['entries']
+      call_api('feed/entry', 'entry_id' => entryids)['entries']
     end
 
     # Gets an array of entries that match a given +query+.
     def search(query)
       call_api('feed/search', 'q' => query)['entries']
+    end
+
+    # Gets an array of entries that link to a given +url+.
+    def search_for_url(url, options = nil)
+      new_options = { 'url' => url }
+      new_options.merge!(options) if options
+      call_api('feed/url', new_options)['entries']
+    end
+
+    # Gets an array of entries that link to a given +domain+.
+    def search_for_domain(url, options = nil)
+      new_options = { 'url' => url }
+      new_options.merge!(options) if options
+      call_api('feed/domain', new_options)['entries']
     end
 
     #
