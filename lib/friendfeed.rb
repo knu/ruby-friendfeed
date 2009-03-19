@@ -145,6 +145,12 @@ module FriendFeed
       call_api('feed/room/%s' % URI.encode(nickname))['entries']
     end
 
+    # Gets an entry of a given +entryid+.  An exception is raised when
+    # no metching entry is found due to a 404 response.
+    def get_entry(entryid)
+      call_api('feed/entry/%s' % URI.encode(entryid))['entries'].first
+    end
+
     #
     # Unofficial API
     #
