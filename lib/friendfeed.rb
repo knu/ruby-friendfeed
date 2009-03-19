@@ -103,6 +103,12 @@ module FriendFeed
       call_api('feed/user/%s' % URI.encode(nickname))['entries']
     end
 
+    # Gets an array of the most recent entries from users of given
+    # +nicknames+.
+    def get_multi_user_entries(nicknames)
+      call_api('feed/user', 'nickname' => nicknames.join(','))['entries']
+    end
+
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has commented
     # on.
@@ -131,6 +137,12 @@ module FriendFeed
     def get_user_friend_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
       call_api('feed/user/%s/friends' % URI.encode(nickname))['entries']
+    end
+
+    # Gets an array of the most recent entries in a room of a given
+    # +nickname+.
+    def get_room_entries(nickname)
+      call_api('feed/room/%s' % URI.encode(nickname))['entries']
     end
 
     #
