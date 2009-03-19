@@ -87,6 +87,10 @@ module FriendFeed
         })
     end
 
+    def get_public_entries()
+      call_api('feed/public')['entries']
+    end
+
     #
     # Unofficial API
     #
