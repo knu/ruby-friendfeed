@@ -164,9 +164,15 @@ module FriendFeed
     end
 
     # Gets an entry of a given +entryid+.  An exception is raised when
-    # no metching entry is found due to a 404 response.
+    # it fails.
     def get_entry(entryid)
       call_api('feed/entry/%s' % URI.encode(entryid))['entries'].first
+    end
+
+    # Gets an array of entries of given +entryids+.  An exception is
+    # raised when it fails.
+    def get_entries(entryids)
+      call_api('feed/entry', 'entry_id' => entryids.join(','))['entries']
     end
 
     #
