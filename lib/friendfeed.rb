@@ -96,6 +96,18 @@ module FriendFeed
       call_api('feed/public')['entries']
     end
 
+    # Gets an array of the entries the authenticated user would see on
+    # their home page.
+    def get_home_entries()
+      call_api('feed/home')['entries']
+    end
+
+    # Gets an array of the entries for the authenticated user's list
+    # of a given +nickname+
+    def get_list_entries(nickname)
+      call_api('feed/list/%s' % URI.encode(nickname))['entries']
+    end
+
     # Gets an array of the most recent entries from a user of a given
     # +nickname+ (defaulted to the authenticated user).
     def get_user_entries(nickname = @nickname)
@@ -143,6 +155,12 @@ module FriendFeed
     # +nickname+.
     def get_room_entries(nickname)
       call_api('feed/room/%s' % URI.encode(nickname))['entries']
+    end
+
+    # Gets an array of the entries the authenticated user would see on
+    # their rooms page.
+    def get_rooms_entries()
+      call_api('feed/rooms')['entries']
     end
 
     # Gets an entry of a given +entryid+.  An exception is raised when
