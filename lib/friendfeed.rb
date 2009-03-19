@@ -71,7 +71,7 @@ module FriendFeed
     # Gets profile information of a user, defaulted to the
     # authenticated user, in hash.
     def get_profile(username = @username)
-      call_api('user/%s/profile' % username)
+      call_api('user/%s/profile' % URI.encode(username))
     end
 
     # Gets an array of profile information of users.
