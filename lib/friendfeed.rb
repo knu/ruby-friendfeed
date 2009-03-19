@@ -96,6 +96,12 @@ module FriendFeed
       call_api('feed/public')['entries']
     end
 
+    # Gets an array of the most recent entries from 
+    def get_user_entries(nickname = @nickname)
+      nickname or raise 'nickname not given, nor logged in'
+      call_api('user/%s/profile' % URI.encode(nickname))
+    end
+
     #
     # Unofficial API
     #
