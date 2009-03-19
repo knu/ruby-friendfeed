@@ -24,7 +24,7 @@ module FriendFeed
     # Official API
     #
 
-    API_URI = ROOT_API + "/api/"
+    API_URI = ROOT_URI + "/api/"
 
     private
 
