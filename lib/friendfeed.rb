@@ -18,7 +18,7 @@ module FriendFeed
 
   # Client library for FriendFeed API.
   class Client
-    attr_reader :username
+    attr_reader :nickname
 
     #
     # Official API
@@ -38,17 +38,17 @@ module FriendFeed
 
     public
 
-    # Performs a login with a +username+ and +remote key+ and returns
+    # Performs a login with a +nickname+ and +remote key+ and returns
     # self.  This enables call of any official API that requires
     # authentication[6~.  It is not needed to call this method if you
     # have called login(), which internally obtains a remote key and
     # calls this method.  An exception is raised if authentication
     # fails.
-    def api_login(username, remote_key)
-      @username = username
+    def api_login(nickname, remote_key)
+      @nickname = nickname
       @remote_key = remote_key
       @api_agent = get_api_agent()
-      @api_agent.auth(@username, @remote_key)
+      @api_agent.auth(@nickname, @remote_key)
       validate
 
       self
@@ -68,21 +68,23 @@ module FriendFeed
       JSON.parse(api_agent.get_file(uri))
     end
 
-    # Gets profile information of a user, defaulted to the
-    # authenticated user, in hash.
-    def get_profile(username = @username)
-      call_api('user/%s/profile' % URI.encode(username))
+    # Gets profile information of a user of a given +nickname+,
+    # defaulted to the authenticated user, in hash.
+    def get_profile(nickname = @nickname)
+      call_api('user/%s/profile' % URI.encode(nickname))
     end
 
-    # Gets an array of profile information of users.
-    def get_profiles(usernames)
-      call_api('profiles', 'nickname' => usernames.join(','))['profiles']
+    # Gets an array of profile information of users of given
+    # +nicknames+.
+    def get_profiles(nicknames)
+      call_api('profiles', 'nickname' => nicknames.join(','))['profiles']
     end
 
-    # Gets an array of profile information of users a user (defaulted
-    # to the authenticated user) is subscribing to.
-    def get_real_friends(username = @username)
-      get_profiles(get_profile(@username)['subscriptions'].map { |subscription|
+    # Gets an array of profile information of users a user of a given
+    # +nickname+ (defaulted to the authenticated user) is subscribing
+    # to.
+    def get_real_friends(nickname = @nickname)
+      get_profiles(get_profile(@nickname)['subscriptions'].map { |subscription|
           subscription['nickname']
         })
     end
@@ -107,11 +109,11 @@ module FriendFeed
 
     public
 
-    # Performs a login with a +username+ and +password+ and returns
+    # Performs a login with a +nickname+ and +password+ and returns
     # self.  This enables call of any API, including both official API
     # and unofficial API.
-    def login(username, password)
-      @username = username
+    def login(nickname, password)
+      @nickname = nickname
       @password = password
       @login_agent = WWW::Mechanize.new
 
@@ -121,7 +123,7 @@ module FriendFeed
         LOGIN_URI + form.action == LOGIN_URI
       } or raise 'Cannot locate a login form'
 
-      login_form.set_fields(:email => @username, :password => @password)
+      login_form.set_fields(:email => @nickname, :password => @password)
 
       page = @login_agent.submit(login_form)
 
@@ -132,7 +134,7 @@ module FriendFeed
       page = @login_agent.get(ROOT_URI + "/account/api")
       remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
 
-      api_login(username, remote_key)
+      api_login(nickname, remote_key)
     end
 
     # Gets an array of profile information of the authenticated user's
@@ -184,17 +186,17 @@ module FriendFeed
       end
     end
 
-    # Creates an imaginary friend of a given +username+ and returns a
+    # Creates an imaginary friend of a given +nickname+ and returns a
     # unique ID string on success.  Like other methods in general, an
     # exception is raised on failure. [unofficial]
-    def create_imaginary_friend(username)
-      post(ROOT_URI + '/a/createimaginary', 'name' => username).xpath("//a[@class='l_userunsubscribe']/@uid").to_s
+    def create_imaginary_friend(nickname)
+      post(ROOT_URI + '/a/createimaginary', 'name' => nickname).xpath("//a[@class='l_userunsubscribe']/@uid").to_s
     end
 
     # Renames an imaginary friend specified by a unique ID to a given
-    # +username+. [unofficial]
-    def rename_imaginary_friend(id, username)
-      post(ROOT_URI + '/a/imaginaryname', 'user' => id, 'name' => username)
+    # +nickname+. [unofficial]
+    def rename_imaginary_friend(id, nickname)
+      post(ROOT_URI + '/a/imaginaryname', 'user' => id, 'name' => nickname)
     end
 
     # Adds a Twitter service to an imaginary friend specified by a
