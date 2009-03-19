@@ -103,6 +103,14 @@ module FriendFeed
       call_api('feed/user/%s' % URI.encode(nickname))
     end
 
+    # Gets an array of the most recent entries a user of a given
+    # +nickname+ (defaulted to the authenticated user) has commented
+    # on.
+    def get_user_commented_entries(nickname = @nickname)
+      nickname or raise 'nickname not given, nor logged in'
+      call_api('feed/user/%s/comments' % URI.encode(nickname))
+    end
+
     #
     # Unofficial API
     #
