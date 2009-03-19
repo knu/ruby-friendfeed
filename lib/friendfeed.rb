@@ -100,7 +100,7 @@ module FriendFeed
     # +nickname+ (defaulted to the authenticated user).
     def get_user_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
-      call_api('feed/user/%s' % URI.encode(nickname))
+      call_api('feed/user/%s' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
@@ -108,14 +108,14 @@ module FriendFeed
     # on.
     def get_user_commented_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
-      call_api('feed/user/%s/comments' % URI.encode(nickname))
+      call_api('feed/user/%s/comments' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has like'd.
     def get_user_liked_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
-      call_api('feed/user/%s/likes' % URI.encode(nickname))
+      call_api('feed/user/%s/likes' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
@@ -123,14 +123,14 @@ module FriendFeed
     # on or like'd.
     def get_user_discussed_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
-      call_api('feed/user/%s/discussion' % URI.encode(nickname))
+      call_api('feed/user/%s/discussion' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries from friends of a user
     # of a given +nickname+ (defaulted to the authenticated user).
     def get_user_friend_entries(nickname = @nickname)
       nickname or raise 'nickname not given, nor logged in'
-      call_api('feed/user/%s/friends' % URI.encode(nickname))
+      call_api('feed/user/%s/friends' % URI.encode(nickname))['entries']
     end
 
     #
