@@ -87,6 +87,7 @@ module FriendFeed
         })
     end
 
+    # Gets an array of the most recent public entries.
     def get_public_entries()
       call_api('feed/public')['entries']
     end
