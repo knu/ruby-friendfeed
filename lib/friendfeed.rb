@@ -175,6 +175,11 @@ module FriendFeed
       call_api('feed/entry', 'entry_id' => entryids.join(','))['entries']
     end
 
+    # Gets an array of entries that match a given +query+.
+    def search(query)
+      call_api('feed/search', 'q' => query)['entries']
+    end
+
     #
     # Unofficial API
     #
