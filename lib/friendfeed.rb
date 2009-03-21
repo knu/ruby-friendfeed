@@ -13,6 +13,16 @@ require 'json'
 require 'mechanize'
 require 'uri'
 
+class Array
+  def self.try_convert(obj)
+    return obj if Array === obj
+    return nil if !obj.respond_to?(:to_ary)
+    nobj = obj.to_ary 
+    return nobj if Array === nobj
+    raise TypeError, format("can't convert %s to %s (%s#to_ary gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
+end
+
 module FriendFeed
   ROOT_URI      = URI.parse("https://friendfeed.com/")
 
@@ -62,9 +72,8 @@ module FriendFeed
       uri = API_URI + path
       if parameters
         uri.query = parameters.map { |key, value|
-          case value
-          when Array
-            value = value.join(',')
+          if array = Array.try_convert(value)
+            value = array.join(',')
           end
           URI.encode(key) + "=" + URI.encode(value)
         }.join('&')
