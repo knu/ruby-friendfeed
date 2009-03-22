@@ -13,16 +13,6 @@ require 'json'
 require 'mechanize'
 require 'uri'
 
-class Array
-  def self.try_convert(obj)
-    return obj if Array === obj
-    return nil if !obj.respond_to?(:to_ary)
-    nobj = obj.to_ary 
-    return nobj if Array === nobj
-    raise TypeError, format("can't convert %s to %s (%s#to_ary gives %s)", obj.class, self.class, obj.class, nobj.class)
-  end unless self.respond_to?(:try_convert)
-end
-
 module FriendFeed
   ROOT_URI      = URI.parse("https://friendfeed.com/")
 
@@ -44,6 +34,10 @@ module FriendFeed
 
     def validate
       call_api('validate')
+    end
+
+    def require_api_login
+      @nickname or raise 'not logged in'
     end
 
     public
@@ -84,7 +78,7 @@ module FriendFeed
     # Gets profile information of a user of a given +nickname+,
     # defaulted to the authenticated user, in hash.
     def get_profile(nickname = @nickname)
-      nickname or nickname_required
+      nickname or require_api_login
       call_api('user/%s/profile' % URI.encode(nickname))
     end
 
@@ -98,7 +92,7 @@ module FriendFeed
     # given +nickname+ (defaulted to the authenticated user) is
     # subscribing to.
     def get_real_friends(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       get_profiles(get_profile(@nickname)['subscriptions'].map { |subscription|
           subscription['nickname']
         })
@@ -124,7 +118,7 @@ module FriendFeed
     # Gets an array of the most recent entries from a user of a given
     # +nickname+ (defaulted to the authenticated user).
     def get_user_entries(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       call_api('feed/user/%s' % URI.encode(nickname))['entries']
     end
 
@@ -138,14 +132,14 @@ module FriendFeed
     # +nickname+ (defaulted to the authenticated user) has commented
     # on.
     def get_user_commented_entries(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       call_api('feed/user/%s/comments' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has like'd.
     def get_user_liked_entries(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       call_api('feed/user/%s/likes' % URI.encode(nickname))['entries']
     end
 
@@ -153,14 +147,14 @@ module FriendFeed
     # +nickname+ (defaulted to the authenticated user) has commented
     # on or like'd.
     def get_user_discussed_entries(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       call_api('feed/user/%s/discussion' % URI.encode(nickname))['entries']
     end
 
     # Gets an array of the most recent entries from friends of a user
     # of a given +nickname+ (defaulted to the authenticated user).
     def get_user_friend_entries(nickname = @nickname)
-      nickname or raise 'nickname not given, nor logged in'
+      nickname or require_api_login
       call_api('feed/user/%s/friends' % URI.encode(nickname))['entries']
     end
 
@@ -324,4 +318,14 @@ module FriendFeed
       post(ROOT_URI + '/a/userunsubscribe', 'user' => id)
     end
   end
+end
+
+class Array
+  def self.try_convert(obj)
+    return obj if obj.instance_of?(self)
+    return nil if !obj.respond_to?(:to_ary)
+    nobj = obj.to_ary 
+    return nobj if nobj.instance_of?(self)
+    raise TypeError, format("can't convert %s to %s (%s#to_ary gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
 end
