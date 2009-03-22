@@ -201,6 +201,45 @@ module FriendFeed
       call_api('feed/domain', new_options)['entries']
     end
 
+    # Publishes (shares) a given entry.
+    def publish(title, options = nil)
+      require_api_login
+      new_options = { 'title' => title }
+      if options
+        options.each { |key, value|
+          case key = key.to_s
+          when 'title', 'link', 'comment', 'room'
+            new_options[key] = value
+          when 'images'
+            value.each_with_index { |value, i|
+              if url = String.try_convert(value)
+                link = nil
+              elsif array = Array.try_convert(value)
+                url, link = *array
+              elsif hash = Hash.try_convert(value)
+                url, link = *hash.value_at('url', 'link')
+              end
+              new_options['image%d_url' % i] = url
+              new_options['image%d_link' % i] = link if link
+            }
+          when 'audios'
+            value.each_with_index { |value, i|
+              if url = String.try_convert(value)
+                link = nil
+              elsif array = Array.try_convert(value)
+                url, link = *array
+              elsif hash = Hash.try_convert(value)
+                url, link = *hash.values_at('url', 'link')
+              end
+              new_options['audio%d_url' % i] = url
+              new_options['audio%d_link' % i] = link if link
+            }
+          end
+        }
+      end
+      call_api('share', new_options)
+    end
+
     #
     # Unofficial API
     #
@@ -327,5 +366,25 @@ class Array
     nobj = obj.to_ary 
     return nobj if nobj.instance_of?(self)
     raise TypeError, format("can't convert %s to %s (%s#to_ary gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
+end
+
+class Hash
+  def self.try_convert(obj)
+    return obj if obj.instance_of?(self)
+    return nil if !obj.respond_to?(:to_hash)
+    nobj = obj.to_hash 
+    return nobj if nobj.instance_of?(self)
+    raise TypeError, format("can't convert %s to %s (%s#to_hash gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
+end
+
+class String
+  def self.try_convert(obj)
+    return obj if obj.instance_of?(self)
+    return nil if !obj.respond_to?(:to_str)
+    nobj = obj.to_str 
+    return nobj if nobj.instance_of?(self)
+    raise TypeError, format("can't convert %s to %s (%s#to_str gives %s)", obj.class, self.class, obj.class, nobj.class)
   end unless self.respond_to?(:try_convert)
 end
