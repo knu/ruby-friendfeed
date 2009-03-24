@@ -33,7 +33,7 @@ def ConfigFile()
   $config_file ||= File.join(ConfigDir(), 'config.yml')
 end
 
-def Config(keypath, default = nil)
+def Config(keypath, default = :omitted)
   $config ||= YAML.load_file(ConfigFile())
 
   keypath.split('.').inject($config) { |hash, key|
@@ -41,7 +41,7 @@ def Config(keypath, default = nil)
     hash.fetch(key)
   }
 rescue => e
-  return default if !default.nil?
+  return default if default != :omitted
   
   STDERR.print <<EOM
 The key "#{keypath}" is missing in #{ConfigFile()}.
