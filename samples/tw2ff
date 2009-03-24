@@ -10,9 +10,7 @@ $LOAD_PATH.unshift(Pathname($0).dirname.parent.join('lib'))
 require 'rubygems'
 require 'friendfeed'
 require 'main'
-require 'pp'
 require 'uri'
-require 'set'
 require 'twitter'
 require 'yaml'
 require 'yaml/store'
@@ -130,6 +128,8 @@ Main {
     description 'Add imaginary friends for Twitter-only friends'
 
     def run
+      require 'set'
+
       ffcli = friendfeed_client()
 
       subscribed = Set[]
