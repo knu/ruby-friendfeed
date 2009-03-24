@@ -169,7 +169,7 @@ Main {
   end
 
   mode 'replies' do
-    description 'Produce an RSS feed for Twitter replies from unknown users'
+    description 'Produce an RSS feed for Twitter replies from non-friends'
 
     argument 'filename'
 
