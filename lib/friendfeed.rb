@@ -14,7 +14,7 @@ require 'mechanize'
 require 'uri'
 
 module FriendFeed
-  ROOT_URI      = URI.parse("https://friendfeed.com/")
+  ROOT_URI = URI.parse("https://friendfeed.com/")
 
   # Client library for FriendFeed API.
   class Client
@@ -314,7 +314,7 @@ module FriendFeed
 
       login_form.set_fields(:email => @nickname, :password => @password)
 
-      page = @login_agent.submit(login_form)
+      page = login_form.submit
 
       login_form = page.forms.find { |form|
         LOGIN_URI + form.action == LOGIN_URI
