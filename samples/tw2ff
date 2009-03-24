@@ -188,9 +188,9 @@ Main {
 
       File.open(filename, 'w') { |w|
         feed = RSS::Maker.make("2.0") { |rss|
-          rss.channel.title = 'Twitter replies to you'
+          rss.channel.title = 'Twitter replies from non-friends'
           rss.channel.link = 'http://twitter.com/replies'
-          rss.channel.description = 'Twitter replies to you'
+          rss.channel.description = 'Twitter replies from non-friends'
 
           friends = twitter_client().all_friends.map { |user|
             user.screen_name
