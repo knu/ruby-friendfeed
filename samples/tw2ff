@@ -174,14 +174,15 @@ Main {
   end
 
   mode 'replies' do
-    description 'Produce an RSS feed for Twitter replies'
+    description 'Produce an RSS feed for Twitter replies from unknown users'
 
     argument 'filename'
 
     def run
-      require 'rss'
-      require 'time'
       require 'cgi'
+      require 'rss'
+      require 'set'
+      require 'time'
 
       filename = params['filename'].value
 
@@ -191,10 +192,16 @@ Main {
           rss.channel.link = 'http://twitter.com/replies'
           rss.channel.description = 'Twitter replies to you'
 
+          friends = twitter_client().all_friends.map { |user|
+            user.screen_name
+          }.to_set
+          friends << Config('twitter.username')
+
           twitter_client().replies.each { |reply|
             user = reply.user
             next if user.protected
             name = user.screen_name
+            next if friends.include?(name)
             text = '%s: %s' % [name, reply.text]
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
