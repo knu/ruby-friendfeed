@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # -*- mode: ruby -*-
 
+$KCODE = 'u'
+
 require 'pathname'
 
 $LOAD_PATH.unshift(Pathname($0).dirname.parent.join('lib'))
@@ -11,6 +13,7 @@ require 'main'
 require 'pp'
 require 'uri'
 require 'set'
+require 'twitter'
 require 'yaml'
 require 'yaml/store'
 
@@ -89,7 +92,10 @@ def friendfeed_client
     end
 end
 
-require 'twitter'
+def unhtmlify(string)
+  string.gsub(/<.*?>/, '')
+  CGI.unescapeHTML(string)
+end
 
 class Twitter::Base
   def all_friends
@@ -111,11 +117,6 @@ def twitter_client
       putinfo 'Logging in to Twitter as %s', username
       Twitter::Base.new(username, password)
     end
-end
-
-def twitter_friends
-  twcli = twitter_client()
-  friends = twcli.all_friends
 end
 
 Main {
@@ -141,7 +142,7 @@ Main {
         }
       }
 
-      friends = twitter_friends()
+      friends = twitter_client().all_friends
 
       to_subscribe = Set[]
       to_watch = Set[]
@@ -166,6 +167,44 @@ Main {
         putinfo 'Creating an imaginary user for %s', name
         id = ffcli.create_imaginary_friend('(%s)' % name)
         ffcli.add_twitter_to_imaginary_friend(id, name)
+      }
+    end
+  end
+
+  mode 'replies' do
+    description 'Produce an RSS feed for Twitter replies'
+
+    argument 'filename'
+
+    def run
+      require 'rss'
+      require 'time'
+      require 'cgi'
+
+      filename = params['filename'].value
+
+      File.open(filename, 'w') { |w|
+        feed = RSS::Maker.make("2.0") { |rss|
+          rss.channel.title = 'Twitter replies to you'
+          rss.channel.link = 'http://twitter.com/replies'
+          rss.channel.description = 'Twitter replies to you'
+
+          twitter_client().replies.each { |reply|
+            user = reply.user
+            next if user.protected
+            name = user.screen_name
+            text = '%s: %s' % [name, reply.text]
+            url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
+            timestamp = Time.parse(reply.created_at)
+            rss.items.new_item { |item|
+              item.title = unhtmlify(text)
+              item.link = url
+              item.description = text
+              item.date = timestamp
+            }
+          }
+        }
+        w.print feed.to_s
       }
     end
   end
