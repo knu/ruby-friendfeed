@@ -37,7 +37,7 @@ def Config(keypath, default = nil)
   $config ||= YAML.load_file(ConfigFile())
 
   keypath.split('.').inject($config) { |hash, key|
-    hash.instance_of?(Hash) or raise TypeError
+    hash.is_a?(Hash) or raise TypeError
     hash.fetch(key)
   }
 rescue => e
