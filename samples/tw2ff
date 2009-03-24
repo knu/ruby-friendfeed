@@ -120,6 +120,8 @@ def twitter_client
 end
 
 Main {
+  description 'Twitter to FriendFeed migration helper'
+
   def run
     print usage.to_s
   end
