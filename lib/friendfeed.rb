@@ -59,20 +59,27 @@ module FriendFeed
     end
 
     # Calls an official API specified by a +path+ with optional
-    # parameters, and returns an object parsed from a JSON response.
-    def call_api(path, parameters = nil)
+    # +get_parameters+ and +post_parameters+, and returns an object
+    # parsed from a JSON response.  If +post_parameters+ is given, a
+    # POST request is issued.  A GET request is issued otherwise.
+    def call_api(path, get_parameters = nil, post_parameters = nil)
       api_agent = get_api_agent()
 
       uri = API_URI + path
-      if parameters
-        uri.query = parameters.map { |key, value|
+      if get_parameters
+        uri.query = get_parameters.map { |key, value|
           if array = Array.try_convert(value)
             value = array.join(',')
           end
           URI.encode(key) + "=" + URI.encode(value)
         }.join('&')
       end
-      JSON.parse(api_agent.get_file(uri))
+
+      if post_parameters
+        JSON.parse(api_agent.post(uri, post_parameters).body)
+      else
+        JSON.parse(api_agent.get_file(uri))
+      end
     end
 
     # Gets profile information of a user of a given +nickname+,
@@ -214,10 +221,18 @@ module FriendFeed
             value.each_with_index { |value, i|
               if url = String.try_convert(value)
                 link = nil
-              elsif array = Array.try_convert(value)
-                url, link = *array
-              elsif hash = Hash.try_convert(value)
-                url, link = *hash.value_at('url', 'link')
+              else
+                if array = Array.try_convert(value)
+                  value1, value2 = *array
+                elsif hash = Hash.try_convert(value)
+                  value1, value2 = *hash.values_at('url', 'link')
+                else
+                  raise TypeError, "Each image must be specified by <image URL>, [<image URL>, <link URL>], or {'url' => <image URL>, 'link' => <link URL>}."
+                end
+                url = String.try_convert(value1) or
+                  raise TypeError, "can't convert #{value1.class} into String"
+                link = String.try_convert(value2) or
+                  raise TypeError, "can't convert #{value2.class} into String"
               end
               new_options['image%d_url' % i] = url
               new_options['image%d_link' % i] = link if link
@@ -226,18 +241,46 @@ module FriendFeed
             value.each_with_index { |value, i|
               if url = String.try_convert(value)
                 link = nil
-              elsif array = Array.try_convert(value)
-                url, link = *array
-              elsif hash = Hash.try_convert(value)
-                url, link = *hash.values_at('url', 'link')
+              else
+                if array = Array.try_convert(value)
+                  value1, value2 = *array
+                elsif hash = Hash.try_convert(value)
+                  value1, value2 = *hash.values_at('url', 'link')
+                else
+                  raise TypeError, "Each audio must be specified by <audio URL>, [<audio URL>, <link URL>], or {'url' => <audio URL>, 'link' => <link URL>}."
+                end
+                url = String.try_convert(value1) or
+                  raise TypeError, "can't convert #{value1.class} into String"
+                link = String.try_convert(value2) or
+                  raise TypeError, "can't convert #{value2.class} into String"
               end
               new_options['audio%d_url' % i] = url
               new_options['audio%d_link' % i] = link if link
             }
+          when 'files'
+            value.each_with_index { |value, i|
+              if file = IO.try_convert(value)
+                link = nil
+              else
+                if array = Array.try_convert(value)
+                  value1, value2 = *array
+                elsif hash = Hash.try_convert(value)
+                  value1, value2 = *hash.values_at('file', 'link')
+                else
+                  raise TypeError, "Each file must be specified by <file IO>, [<file IO>, <link URL>], or {'file' => <file IO>, 'link' => <link URL>}."
+                end
+                file = IO.try_convert(value1) or
+                  raise TypeError, "can't convert #{value1.class} into IO"
+                link = String.try_convert(value2) or
+                  raise TypeError, "can't convert #{value2.class} into String"
+              end
+              new_options['file%s' % i] = file
+              new_options['file%d_link' % i] = link if link
+            }
           end
         }
       end
-      call_api('share', new_options)
+      call_api('share', nil, new_options)['entries'].first
     end
 
     #
@@ -376,6 +419,16 @@ class Hash
     nobj = obj.to_hash 
     return nobj if nobj.instance_of?(self)
     raise TypeError, format("can't convert %s to %s (%s#to_hash gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
+end
+
+class IO
+  def self.try_convert(obj)
+    return obj if obj.is_a?(self)
+    return nil if !obj.respond_to?(:to_io)
+    nobj = obj.to_io 
+    return nobj if nobj.instance_of?(self)
+    raise TypeError, format("can't convert %s to %s (%s#to_io gives %s)", obj.class, self.class, obj.class, nobj.class)
   end unless self.respond_to?(:try_convert)
 end
 
