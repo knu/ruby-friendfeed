@@ -134,7 +134,7 @@ Main {
 
       subscribed = Set[]
       putinfo 'Getting friend lists in FriendFeed...'
-      (ffcli.get_imaginary_friends + ffcli.get_real_friends).map { |profile|
+      (ffcli.get_imaginary_friends + ffcli.get_real_friends).each { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
