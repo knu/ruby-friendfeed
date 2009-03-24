@@ -90,11 +90,6 @@ def friendfeed_client
     end
 end
 
-def unhtmlify(string)
-  string.gsub(/<.*?>/, '')
-  CGI.unescapeHTML(string)
-end
-
 class Twitter::Base
   def all_friends
     list = []
@@ -179,7 +174,7 @@ Main {
     argument 'filename'
 
     def run
-      require 'cgi'
+      require 'nokogiri'
       require 'rss'
       require 'set'
       require 'time'
@@ -206,7 +201,7 @@ Main {
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
             rss.items.new_item { |item|
-              item.title = unhtmlify(text)
+              item.title = Nokogiri.HTML(text).inner_text
               item.link = url
               item.description = text
               item.date = timestamp
