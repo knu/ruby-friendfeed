@@ -1,0 +1,148 @@
+#!/usr/bin/env ruby
+# -*- mode: ruby -*-
+
+require 'pathname'
+
+$LOAD_PATH.unshift(Pathname($0).dirname.parent.join('lib'))
+
+require 'rubygems'
+require 'friendfeed'
+require 'main'
+require 'pp'
+require 'uri'
+require 'set'
+require 'yaml'
+require 'yaml/store'
+
+MYNAME = File.basename($0)
+
+TWITTER_URI = URI.parse('http://twitter.com/')
+
+def ConfigDir()
+  $config_dir ||= File.expand_path('~/.%s' % MYNAME)
+  if !File.directory?($config_dir)
+    Dir.mkdir($config_dir, 0700)
+  end
+  $config_dir
+end
+
+def Config(key)
+  $config ||= YAML.load_file(File.join(ConfigDir(), 'config.yml'))
+  $config[key]
+rescue => e
+  error(e.to_s)
+  exit 1
+end
+
+def puterror(message)
+  STDERR.puts MYNAME + ': ' + e.to_s
+end
+
+def putinfo(fmt, *args)
+  STDERR.puts sprintf(fmt, *args)
+end
+
+def Status(key)
+  $status ||= YAML::Store.new(File.join(ConfigDir(), 'status.yml'))
+  if block_given?
+    $status.transaction(false) {
+      return $status[key] = yield
+    }
+  else
+    $status.transaction(true) {
+      return $status[key]
+    }
+  end
+end
+
+def friendfeed_client
+  $ff_client ||=
+    begin
+      conf = Config('friendfeed')
+      username, password = conf['username'], conf['password']
+      putinfo 'Logging in to FriendFeed as %s', username
+      FriendFeed::Client.new.login(username, password)
+    end
+end
+
+require 'twitter'
+
+class Twitter::Base
+  def all_friends
+    list = []
+    (1..100).each { |i|
+      slice = friends(:page => i)
+      list.concat(slice)
+      break if slice.size < 100
+    }
+    list
+  end
+end
+
+def twitter_client
+  $tw_client ||=
+    begin
+      conf = Config('twitter')
+      username, password = conf['username'], conf['password']
+      putinfo 'Logging in to Twitter as %s', username
+      Twitter::Base.new(username, password)
+    end
+end
+
+def twitter_friends
+  twcli = twitter_client()
+  friends = twcli.all_friends
+end
+
+Main {
+  def run
+    STDERR.print usage.to_s
+  end
+  
+  mode 'update' do
+    description 'Check friend lists and add imaginary friends'
+
+    def run
+      ffcli = friendfeed_client()
+
+      subscribed = Set[]
+      putinfo 'Getting friends list in FriendFeed...'
+      (ffcli.get_imaginary_friends + ffcli.get_real_friends).map { |profile|
+        profile['services'].each { |service|
+          url = service['profileUrl'] or next
+          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
+            putinfo 'Found a Twitter friend %s in FriendFeed', name
+            subscribed << name
+          end
+        }
+      }
+
+      friends = twitter_friends()
+
+      to_subscribe = Set[]
+      to_watch = Set[]
+
+      friends.each { |friend|
+        name = friend.screen_name
+        next if subscribed.include?(name)
+
+        if friend.protected
+          to_watch << name
+        else
+          to_subscribe << name
+        end
+      }
+
+      to_watch.each { |name|
+        putinfo 'Skipping a protected user %s', name
+      }
+      Status('protected') { to_watch.sort }
+
+      to_subscribe.each { |name|
+        putinfo 'Creating an imaginary user for %s', name
+        id = ffcli.create_imaginary_friend('(%s)' % name)
+        ffcli.add_twitter_to_imaginary_friend(id, name)
+      }
+    end
+  end
+}
