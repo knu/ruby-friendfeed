@@ -124,7 +124,7 @@ Main {
     print usage.to_s
   end
   
-  mode 'update' do
+  mode 'sync' do
     description 'Add imaginary friends for Twitter-only friends'
 
     def run
