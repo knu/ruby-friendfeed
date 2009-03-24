@@ -19,18 +19,42 @@ MYNAME = File.basename($0)
 TWITTER_URI = URI.parse('http://twitter.com/')
 
 def ConfigDir()
-  $config_dir ||= File.expand_path('~/.%s' % MYNAME)
-  if !File.directory?($config_dir)
-    Dir.mkdir($config_dir, 0700)
-  end
-  $config_dir
+  $config_dir ||=
+    begin
+      config_dir = File.expand_path('~/.%s' % MYNAME)
+      if !File.directory?(config_dir)
+        Dir.mkdir(config_dir, 0700)
+      end
+      config_dir
+    end
 end
 
-def Config(key)
-  $config ||= YAML.load_file(File.join(ConfigDir(), 'config.yml'))
-  $config[key]
+def ConfigFile()
+  $config_file ||= File.join(ConfigDir(), 'config.yml')
+end
+
+def Config(keypath, default = nil)
+  $config ||= YAML.load_file(ConfigFile())
+
+  keypath.split('.').inject($config) { |hash, key|
+    hash.instance_of?(Hash) or raise TypeError
+    hash.fetch(key)
+  }
 rescue => e
-  error(e.to_s)
+  return default if !default.nil?
+  
+  STDERR.print <<EOM
+The key "#{keypath}" is missing in #{ConfigFile()}.
+Please edit the file to look like the following:
+
+--- 
+friendfeed: 
+  username: "username"
+  password: "password"
+twitter: 
+  username: "username"
+  password: "password"
+EOM
   exit 1
 end
 
@@ -58,8 +82,8 @@ end
 def friendfeed_client
   $ff_client ||=
     begin
-      conf = Config('friendfeed')
-      username, password = conf['username'], conf['password']
+      username = Config('friendfeed.username')
+      password = Config('friendfeed.password')
       putinfo 'Logging in to FriendFeed as %s', username
       FriendFeed::Client.new.login(username, password)
     end
@@ -82,8 +106,8 @@ end
 def twitter_client
   $tw_client ||=
     begin
-      conf = Config('twitter')
-      username, password = conf['username'], conf['password']
+      username = Config('twitter.username')
+      password = Config('twitter.password')
       putinfo 'Logging in to Twitter as %s', username
       Twitter::Base.new(username, password)
     end
@@ -96,17 +120,17 @@ end
 
 Main {
   def run
-    STDERR.print usage.to_s
+    print usage.to_s
   end
   
   mode 'update' do
-    description 'Check friend lists and add imaginary friends'
+    description 'Add imaginary friends for Twitter-only friends'
 
     def run
       ffcli = friendfeed_client()
 
       subscribed = Set[]
-      putinfo 'Getting friends list in FriendFeed...'
+      putinfo 'Getting friend lists in FriendFeed...'
       (ffcli.get_imaginary_friends + ffcli.get_real_friends).map { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
