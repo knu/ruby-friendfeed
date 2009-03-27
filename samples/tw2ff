@@ -127,25 +127,47 @@ Main {
 
       ffcli = friendfeed_client()
 
-      subscribed = Set[]
-      putinfo 'Getting friend lists in FriendFeed...'
-      (ffcli.get_imaginary_friends + ffcli.get_real_friends).each { |profile|
+      subscribed_real = Set[]
+      subscribed_imag = Set[]
+
+      putinfo "Checking real friends in FriendFeed..."
+      ffcli.get_real_friends.each { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed', name
-            subscribed << name
+            subscribed_real << name
           end
         }
       }
 
-      friends = twitter_client().all_friends
+      putinfo "Checking imaginary friends in FriendFeed..."
+      ffcli.get_imaginary_friends.each { |profile|
+        profile['services'].each { |service|
+          url = service['profileUrl'] or next
+          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
+            putinfo 'Found a Twitter friend %s in FriendFeed (imaginary)', name
+            subscribed_imag << name
+          end
+        }
+      }
 
+      Status('friends_subscribed_real') { subscribed_real.sort }
+      Status('friends_subscribed_imag') { subscribed_imag.sort }
+
+      (subscribed_real & subscribed_imag).each { |name|
+        putinfo 'Duplicated subscription: %s', name
+      }
+
+      subscribed = subscribed_real + subscribed_imag
+
+      friends = Set[]
       to_subscribe = Set[]
       to_watch = Set[]
 
-      friends.each { |friend|
+      twitter_client().all_friends.each { |friend|
         name = friend.screen_name
+        friends << name
         next if subscribed.include?(name)
 
         if friend.protected
@@ -154,11 +176,14 @@ Main {
           to_subscribe << name
         end
       }
+      friends << Config('twitter.username')
+
+      Status('friends') { friends.sort }
+      Status('friends_to_watch') { to_watch.sort }
 
       to_watch.each { |name|
         putinfo 'Skipping a protected user %s', name
       }
-      Status('protected') { to_watch.sort }
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary user for %s', name
@@ -187,10 +212,7 @@ Main {
           rss.channel.link = 'http://twitter.com/replies'
           rss.channel.description = 'Twitter replies from non-friends'
 
-          friends = twitter_client().all_friends.map { |user|
-            user.screen_name
-          }.to_set
-          friends << Config('twitter.username')
+          friends = Status('friends').to_set
 
           twitter_client().replies.each { |reply|
             user = reply.user
@@ -200,6 +222,69 @@ Main {
             text = '%s: %s' % [name, reply.text]
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
+            rss.items.new_item { |item|
+              item.title = Nokogiri.HTML(text).inner_text
+              item.link = url
+              item.description = text
+              item.date = timestamp
+            }
+          }
+        }
+        w.print feed.to_s
+      }
+    end
+  end
+
+  mode 'protected' do
+    description 'Produce an RSS feed for Twitter entries from protected friends'
+
+    argument 'filename'
+
+    def run
+      require 'nokogiri'
+      require 'rss'
+      require 'set'
+      require 'time'
+
+      filename = params['filename'].value
+
+      friends = Status('friends').to_set
+      friends_subscribed_real = Status('friends_subscribed_real').to_set
+
+      items = []
+
+      twitter_client().replies.each { |reply|
+        user = reply.user
+        next if !user.protected
+        name = user.screen_name
+        next if friends.include?(name)
+
+        text = '[%s]: %s' % [name, reply.text]
+        url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
+        timestamp = Time.parse(reply.created_at)
+        items << [timestamp, text, url]
+      }
+
+      twitter_client().timeline.each { |status| 
+        user = status.user
+        next if !user.protected
+        name = user.screen_name
+        next if friends_subscribed_real.include?(name)
+        text = '[%s]: %s' % [name, status.text]
+        url = 'http://twitter.com/%s/statuses/%d' % [name, status.id]
+        timestamp = Time.parse(status.created_at)
+        items << [timestamp, text, url]
+      }
+
+      File.open(filename, 'w') { |w|
+        feed = RSS::Maker.make("2.0") { |rss|
+          rss.channel.title = 'Twitter entries from protected friends'
+          rss.channel.link = 'http://twitter.com/home'
+          rss.channel.description = 'Twitter entries from protected friends'
+
+          items.sort { |a, b|
+            b.first <=> a.first
+          }.each { |timestamp, text, url|
             rss.items.new_item { |item|
               item.title = Nokogiri.HTML(text).inner_text
               item.link = url
