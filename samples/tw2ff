@@ -196,7 +196,9 @@ Main {
   mode 'replies' do
     description 'Produce an RSS feed for Twitter replies from non-friends'
 
-    argument 'filename'
+    argument('filename') {
+      description 'Specifies a flie to write RSS to'
+    }
 
     def run
       require 'nokogiri'
@@ -238,7 +240,9 @@ Main {
   mode 'protected' do
     description 'Produce an RSS feed for Twitter entries from protected friends'
 
-    argument 'filename'
+    argument('filename') {
+      description 'Specifies a flie to write RSS to'
+    }
 
     def run
       require 'nokogiri'
