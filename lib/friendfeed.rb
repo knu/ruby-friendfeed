@@ -334,19 +334,41 @@ module FriendFeed
 
       page = agent.get(IMAGINARY_URI)
       page.parser.xpath("//div[@class='name']//a[@class='l_person']").map { |person_a|
-        profile_uri = IMAGINARY_URI + person_a['href']
-        profile_page = agent.get(profile_uri)
-        {
-          'id' => person_a['uid'], 
-          'nickname' => person_a.text,
-          'profileUrl' => profile_uri.to_s,
-          'services' => profile_page.parser.xpath("//div[@class='servicefilter']//a[@class='l_filterservice']").map { |service_a|
-            {
-              'name' => service_a['servicename'],
-              'profileUrl' => (profile_uri + service_a['href']).to_s
-            }
-          },
-        }
+        get_imaginary_friend(person_a['uid'])
+      }
+    end
+
+    # Gets profile information of one of the authenticated user's
+    # imaginary friends, in a format similar to
+    # get_profile(). [unofficial]
+    def get_imaginary_friend(id)
+      agent = get_login_agent()
+
+      profile_uri = IMAGINARY_URI + ("/users/%s" % URI.encode(id))
+      profile_page = agent.get(profile_uri)
+      parser = profile_page.parser
+      {
+        'id' => id,
+        'nickname' => parser.xpath("//h1/a/text()").to_s,
+        'profileUrl' => profile_uri.to_s,
+        'services' => parser.xpath("//div[@class='servicefilter']//a[@class='l_filterservice']").map { |service_a|
+          servicename = service_a['servicename']
+          serviceid = if servicename == "internal"
+                        nil
+                      else
+                        service_a['serviceid'] ||
+                          begin
+                            service_uri = profile_uri + ("?service=%s" % URI.encode(servicename))
+                            page = agent.get(service_uri)
+                            page.parser.xpath("//a[@class='l_refreshfeed']/@serviceid").to_s
+                          end
+                      end
+          {
+            'serviceid' => serviceid,
+            'name' => servicename,
+            'profileUrl' => (profile_uri + service_a['href']).to_s
+          }
+        },
       }
     end
 
@@ -388,15 +410,106 @@ module FriendFeed
       post(ROOT_URI + '/a/imaginaryname', 'user' => id, 'name' => nickname)
     end
 
+    # Adds a feed to an imaginary friend specified by a unique ID.
+    # Specify 'isstatus' => 'on' to display entries as messages (no
+    # link), and 'importcomment' => 'on' to include entry description
+    # as a comment. [unofficial]
+    def add_service_to_imaginary_friend(id, service, options = nil)
+      params = {
+        'stream' => id,
+        'service' => service,
+      }
+      params.update(options) if options
+      post(ROOT_URI + '/a/configureservice', params)
+    end
+
+    # Changes a service of an imaginary friend specified by a unique
+    # ID. [unofficial]
+    def change_service_of_imaginary_friend(id, serviceid, service, options = nil)
+      params = {
+        'stream' => id,
+        'service' => service,
+        'serviceid' => serviceid,
+        'url' => url,
+      }
+      params.update(options) if options
+      post(ROOT_URI + '/a/configureservice', params)
+    end
+
+    # Removes a service of an imaginary friend specified by a unique
+    # ID.  Specify 'deleteentries' => 'on' to delete entries
+    # also. [unofficial]
+    def remove_service_from_imaginary_friend(id, serviceid, service, options = nil)
+      params = {
+        'stream' => id,
+        'service' => service,
+        'serviceid' => serviceid,
+      }
+      params.update(options) if options
+      post(ROOT_URI + '/a/removeservice', params)
+    end
+
+    # Adds a feed to an imaginary friend specified by a unique ID.
+    # Specify 'isstatus' => 'on' to display entries as messages (no
+    # link), and 'importcomment' => 'on' to include entry description
+    # as a comment. [unofficial]
+    def add_feed_to_imaginary_friend(id, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      add_service_to_imaginary_friend(id, 'feed', options)
+    end
+
     # Adds a Twitter service to an imaginary friend specified by a
     # unique ID. [unofficial]
     def add_twitter_to_imaginary_friend(id, twitter_name)
-      post(ROOT_URI + '/a/configureservice', 'stream' => id,
-        'service' => 'twitter','username' => twitter_name)
+      add_service_to_imaginary_friend(id, 'twitter', 'username' => twitter_name)
     end
 
-    # Unsubscribe from a user specified by a unique ID. [unofficial]
-    def unsubscribe_from_user(id)
+    # Changes a feed of an imaginary friend specified by a unique ID.
+    # Specify 'isstatus' => 'on' to display entries as messages (no
+    # link), and 'importcomment' => 'on' to include entry description
+    # as a comment. [unofficial]
+    def change_feed_of_imaginary_friend(id, serviceid, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      add_service_to_imaginary_friend(id, 'feed', options)
+    end
+
+    # Changes a Twitter service of an imaginary friend specified by a
+    # unique ID.  Specify 'isstatus' => 'on' to display entries as
+    # messages (no link), and 'importcomment' => 'on' to include entry
+    # description as a comment. [unofficial]
+    def change_twitter_of_imaginary_friend(id, serviceid, twitter_name)
+      change_service_of_imaginary_friend(id, serviceid, 'twitter', 'username' => twitter_name)
+    end
+
+    # Removes a feed from an imaginary friend specified by a unique
+    # ID.  Specify 'deleteentries' => 'on' to delete entries
+    # also. [unofficial]
+    def remove_feed_from_imaginary_friend(id, serviceid, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      remove_service_from_imaginary_friend(id, serviceid, 'feed', options = nil)
+    end
+
+    # Removes a Twitter service from an imaginary friend specified by
+    # a unique ID.  Specify 'deleteentries' => 'on' to delete entries
+    # also. [unofficial]
+    def remove_twitter_from_imaginary_friend(id, serviceid, twitter_name)
+      params = { 'username' => twitter_name }
+      params.update(options) if options
+      remove_service_from_imaginary_friend(id, serviceid, 'twitter', options = nil)
+    end
+
+    # Changes the picture of an imaginary friend. [unofficial]
+    def change_picture_of_imaginary_friend(id, io)
+      post(ROOT_URI + '/a/changepicture', 'stream' => id,
+        'picture' => io)
+    end
+
+    # Removes an imaginary friend specified by a unique
+    # ID. [unofficial]
+    def remove_imaginary_friend(id)
       post(ROOT_URI + '/a/userunsubscribe', 'user' => id)
     end
   end
