@@ -313,6 +313,18 @@ module FriendFeed
         })
     end
 
+    def add_like(entryid)
+      call_api('like', nil, {
+          'entry' => entryid,
+        })
+    end
+
+    def delete_like(entryid)
+      call_api('like/delete', nil, {
+          'entry' => entryid,
+        })
+    end
+
     #
     # Unofficial API
     #
