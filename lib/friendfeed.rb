@@ -280,7 +280,7 @@ module FriendFeed
                 link = String.try_convert(value2) or
                   raise TypeError, "can't convert #{value2.class} into String"
               end
-              new_options['file%s' % i] = file
+              new_options['file%d' % i] = file
               new_options['file%d_link' % i] = link if link
             }
           end
