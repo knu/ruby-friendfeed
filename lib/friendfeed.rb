@@ -305,6 +305,14 @@ module FriendFeed
         })
     end
 
+    def undelete_comment(entryid, commentid)
+      call_api('comment/delete', nil, {
+          'entry' => entryid,
+          'comment' => commentid,
+          'undelete' => 'on',
+        })
+    end
+
     #
     # Unofficial API
     #
