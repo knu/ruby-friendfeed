@@ -374,6 +374,7 @@ module FriendFeed
     # authenticated user) in blob.  Size can be 'small' (default),
     # 'medium' or 'large',
     def get_picture(nickname = @nickname, size = 'small')
+      nickname or require_api_login
       call_api('/%s/picture' % URI.escape(nickname), { 'size' => size }, nil, true)
     end
 
