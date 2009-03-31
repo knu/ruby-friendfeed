@@ -378,6 +378,18 @@ module FriendFeed
       call_api('/%s/picture' % URI.escape(nickname), { 'size' => size }, nil, true)
     end
 
+    # Gets a picture of a room of a given +nickname+ in blob.  Size
+    # can be 'small' (default), 'medium' or 'large',
+    def get_room_picture(nickname, size = 'small')
+      call_api('/rooms/%s/picture' % URI.escape(nickname), { 'size' => size }, nil, true)
+    end
+
+    # Gets profile information of a room of a given +nickname+ in
+    # hash.
+    def get_room_profile(nickname)
+      call_api('room/%s/profile' % URI.encode(nickname))
+    end
+
     #
     # Unofficial API
     #
