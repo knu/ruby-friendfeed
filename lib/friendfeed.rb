@@ -62,7 +62,7 @@ module FriendFeed
     # +get_parameters+ and +post_parameters+, and returns an object
     # parsed from a JSON response.  If +post_parameters+ is given, a
     # POST request is issued.  A GET request is issued otherwise.
-    def call_api(path, get_parameters = nil, post_parameters = nil)
+    def call_api(path, get_parameters = nil, post_parameters = nil, raw = false)
       api_agent = get_api_agent()
 
       uri = API_URI + path
@@ -76,9 +76,15 @@ module FriendFeed
       end
 
       if post_parameters
-        JSON.parse(api_agent.post(uri, post_parameters).body)
+        body = api_agent.post(uri, post_parameters).body
       else
-        JSON.parse(api_agent.get_file(uri))
+        body = api_agent.get_file(uri)
+      end
+
+      if raw
+        body
+      else
+        JSON.parse(body)
       end
     end
 
@@ -362,6 +368,13 @@ module FriendFeed
           'entry' => entryid,
           'unhide' => 'on',
         })
+    end
+
+    # Gets a picture of a user of a given +nickname+ (defaulted to the
+    # authenticated user) in blob.  Size can be 'small' (default),
+    # 'medium' or 'large',
+    def get_picture(nickname = @nickname, size = 'small')
+      call_api('/%s/picture' % URI.escape(nickname), { 'size' => size }, nil, true)
     end
 
     #
