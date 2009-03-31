@@ -349,6 +349,21 @@ module FriendFeed
         })
     end
 
+    # Hides an existing entry of a given +entryid+.
+    def hide_entry(entryid)
+      call_api('entry/hide', nil, {
+          'entry' => entryid,
+        })
+    end
+
+    # Unhides a given entry that is already hidden.
+    def unhide_entry(entryid)
+      call_api('entry/hide', nil, {
+          'entry' => entryid,
+          'unhide' => 'on',
+        })
+    end
+
     #
     # Unofficial API
     #
