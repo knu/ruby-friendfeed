@@ -334,6 +334,21 @@ module FriendFeed
         })
     end
 
+    # Deletes an existing entry of a given +entryid+.
+    def delete_entry(entryid)
+      call_api('entry/delete', nil, {
+          'entry' => entryid,
+        })
+    end
+
+    # Undeletes a given entry that is already deleted.
+    def undelete_entry(entryid)
+      call_api('entry/delete', nil, {
+          'entry' => entryid,
+          'undelete' => 'on',
+        })
+    end
+
     #
     # Unofficial API
     #
