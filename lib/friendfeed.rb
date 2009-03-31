@@ -107,6 +107,13 @@ module FriendFeed
       call_api('user/%s/profile' % URI.encode(nickname))
     end
 
+    # Edits profile information of the authenticated user.  The fields
+    # "name" and "picture" are supported.
+    def edit_profile(hash)
+      nickname or require_api_login
+      call_api('user/%s/profile' % URI.encode(nickname), nil, hash)
+    end
+
     # Gets an array of profile information of users of given
     # +nicknames+.
     def get_profiles(nicknames)
