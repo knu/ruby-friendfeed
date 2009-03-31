@@ -42,9 +42,11 @@ module FriendFeed
 
     public
 
+    attr_reader :nickname, :remote_key
+
     # Performs a login with a +nickname+ and +remote key+ and returns
     # self.  This enables call of any official API that requires
-    # authentication[6~.  It is not needed to call this method if you
+    # authentication.  It is not needed to call this method if you
     # have called login(), which internally obtains a remote key and
     # calls this method.  An exception is raised if authentication
     # fails.
