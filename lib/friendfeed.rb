@@ -119,12 +119,14 @@ module FriendFeed
     # Gets an array of the entries the authenticated user would see on
     # their home page.
     def get_home_entries()
+      require_api_login
       call_api('feed/home')['entries']
     end
 
     # Gets an array of the entries for the authenticated user's list
     # of a given +nickname+
     def get_list_entries(nickname)
+      require_api_login
       call_api('feed/list/%s' % URI.encode(nickname))['entries']
     end
 
@@ -294,6 +296,7 @@ module FriendFeed
 
     # Adds a comment to a given entry.
     def add_comment(entryid, body)
+      require_api_login
       call_api('comment', nil, {
           'entry' => entryid,
           'body' => body,
@@ -302,6 +305,7 @@ module FriendFeed
 
     # Edits a given comment.
     def edit_comment(entryid, commentid, body)
+      require_api_login
       call_api('comment', nil, {
           'entry' => entryid,
           'comment' => commentid,
@@ -311,6 +315,7 @@ module FriendFeed
 
     # Deletes a given comment.
     def delete_comment(entryid, commentid)
+      require_api_login
       call_api('comment/delete', nil, {
           'entry' => entryid,
           'comment' => commentid,
@@ -319,6 +324,7 @@ module FriendFeed
 
     # Undeletes a given comment that is already deleted.
     def undelete_comment(entryid, commentid)
+      require_api_login
       call_api('comment/delete', nil, {
           'entry' => entryid,
           'comment' => commentid,
@@ -328,6 +334,7 @@ module FriendFeed
 
     # Adds a "like" to a given entry.
     def add_like(entryid)
+      require_api_login
       call_api('like', nil, {
           'entry' => entryid,
         })
@@ -335,6 +342,7 @@ module FriendFeed
 
     # Deletes an existing "like" from a given entry.
     def delete_like(entryid)
+      require_api_login
       call_api('like/delete', nil, {
           'entry' => entryid,
         })
@@ -342,6 +350,7 @@ module FriendFeed
 
     # Deletes an existing entry of a given +entryid+.
     def delete_entry(entryid)
+      require_api_login
       call_api('entry/delete', nil, {
           'entry' => entryid,
         })
@@ -349,6 +358,7 @@ module FriendFeed
 
     # Undeletes a given entry that is already deleted.
     def undelete_entry(entryid)
+      require_api_login
       call_api('entry/delete', nil, {
           'entry' => entryid,
           'undelete' => 'on',
@@ -357,6 +367,7 @@ module FriendFeed
 
     # Hides an existing entry of a given +entryid+.
     def hide_entry(entryid)
+      require_api_login
       call_api('entry/hide', nil, {
           'entry' => entryid,
         })
@@ -364,6 +375,7 @@ module FriendFeed
 
     # Unhides a given entry that is already hidden.
     def unhide_entry(entryid)
+      require_api_login
       call_api('entry/hide', nil, {
           'entry' => entryid,
           'unhide' => 'on',
