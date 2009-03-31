@@ -283,6 +283,28 @@ module FriendFeed
       call_api('share', nil, new_options)['entries'].first
     end
 
+    def add_comment(entryid, body)
+      call_api('comment', nil, {
+          'entry' => entryid,
+          'body' => body,
+        })
+    end
+
+    def edit_comment(entryid, commentid, body)
+      call_api('comment', nil, {
+          'entry' => entryid,
+          'comment' => commentid,
+          'body' => body,
+        })
+    end
+
+    def delete_comment(entryid, commentid)
+      call_api('comment/delete', nil, {
+          'entry' => entryid,
+          'comment' => commentid,
+        })
+    end
+
     #
     # Unofficial API
     #
