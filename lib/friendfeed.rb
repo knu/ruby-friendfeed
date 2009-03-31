@@ -423,9 +423,9 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Changes a service of an imaginary friend specified by a unique
+    # Edits a service of an imaginary friend specified by a unique
     # ID. [unofficial]
-    def change_service_of_imaginary_friend(id, serviceid, service, options = nil)
+    def edit_service_of_imaginary_friend(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -465,22 +465,22 @@ module FriendFeed
       add_service_to_imaginary_friend(id, 'twitter', 'username' => twitter_name)
     end
 
-    # Changes a feed of an imaginary friend specified by a unique ID.
+    # Edits a feed of an imaginary friend specified by a unique ID.
     # Specify 'isstatus' => 'on' to display entries as messages (no
     # link), and 'importcomment' => 'on' to include entry description
     # as a comment. [unofficial]
-    def change_feed_of_imaginary_friend(id, serviceid, url, options = nil)
+    def edit_feed_of_imaginary_friend(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
       add_service_to_imaginary_friend(id, 'feed', options)
     end
 
-    # Changes a Twitter service of an imaginary friend specified by a
+    # Edits a Twitter service of an imaginary friend specified by a
     # unique ID.  Specify 'isstatus' => 'on' to display entries as
     # messages (no link), and 'importcomment' => 'on' to include entry
     # description as a comment. [unofficial]
-    def change_twitter_of_imaginary_friend(id, serviceid, twitter_name)
-      change_service_of_imaginary_friend(id, serviceid, 'twitter', 'username' => twitter_name)
+    def edit_twitter_of_imaginary_friend(id, serviceid, twitter_name)
+      edit_service_of_imaginary_friend(id, serviceid, 'twitter', 'username' => twitter_name)
     end
 
     # Removes a feed from an imaginary friend specified by a unique
