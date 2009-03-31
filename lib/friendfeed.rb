@@ -209,7 +209,7 @@ module FriendFeed
     end
 
     # Publishes (shares) a given entry.
-    def publish(title, options = nil)
+    def add_entry(title, options = nil)
       require_api_login
       new_options = { 'title' => title }
       if options
@@ -283,6 +283,10 @@ module FriendFeed
       call_api('share', nil, new_options)['entries'].first
     end
 
+    alias publish add_entry
+    alias share add_entry
+
+    # Adds a comment to a given entry.
     def add_comment(entryid, body)
       call_api('comment', nil, {
           'entry' => entryid,
@@ -290,6 +294,7 @@ module FriendFeed
         })
     end
 
+    # Edits a given comment.
     def edit_comment(entryid, commentid, body)
       call_api('comment', nil, {
           'entry' => entryid,
@@ -298,6 +303,7 @@ module FriendFeed
         })
     end
 
+    # Deletes a given comment.
     def delete_comment(entryid, commentid)
       call_api('comment/delete', nil, {
           'entry' => entryid,
@@ -305,6 +311,7 @@ module FriendFeed
         })
     end
 
+    # Undeletes a given comment that is already deleted.
     def undelete_comment(entryid, commentid)
       call_api('comment/delete', nil, {
           'entry' => entryid,
@@ -313,12 +320,14 @@ module FriendFeed
         })
     end
 
+    # Adds a "like" to a given entry.
     def add_like(entryid)
       call_api('like', nil, {
           'entry' => entryid,
         })
     end
 
+    # Deletes an existing "like" from a given entry.
     def delete_like(entryid)
       call_api('like/delete', nil, {
           'entry' => entryid,
