@@ -40,6 +40,16 @@ module FriendFeed
       @nickname or raise 'not logged in'
     end
 
+    def call_subscription_api(path)
+      require_api_login
+
+      uri = API_URI + path
+
+      agent = WWW::Mechanize.new
+      agent.auth('username', @nickname)
+      JSON.parse(agent.post(uri, { 'apikey' => @remote_key }).body)
+    end
+
     public
 
     attr_reader :nickname, :remote_key
@@ -414,6 +424,30 @@ module FriendFeed
     # given +nickname+ in hash.
     def get_list_profile(nickname)
       call_api('list/%s/profile' % URI.encode(nickname))
+    end
+
+    # Subscribes to a user of a given +nickname+ and returns a status
+    # string.
+    def subscribe_to_user(nickname)
+      call_subscription_api('user/%s/subscribe' % URI.encode(nickname))['status']
+    end
+
+    # Unsubscribes from a user of a given +nickname+ and returns a
+    # status string.
+    def unsubscribe_from_user(nickname)
+      call_subscription_api('user/%s/subscribe?unsubscribe=1' % URI.encode(nickname))['status']
+    end
+
+    # Subscribes to a room of a given +nickname+ and returns a status
+    # string.
+    def subscribe_to_room(nickname)
+      call_subscription_api('room/%s/subscribe' % URI.encode(nickname))['status']
+    end
+
+    # Unsubscribes from a room of a given +nickname+ and returns a
+    # status string.
+    def unsubscribe_from_room(nickname)
+      call_subscription_api('room/%s/subscribe?unsubscribe=1' % URI.encode(nickname))['status']
     end
 
     #
