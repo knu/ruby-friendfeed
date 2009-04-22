@@ -110,7 +110,7 @@ def twitter_client
       username = Config('twitter.username')
       password = Config('twitter.password')
       putinfo 'Logging in to Twitter as %s', username
-      Twitter::Base.new(username, password)
+      Twitter::Base.new(Twitter::HTTPAuth.new(username, password))
     end
 end
 
