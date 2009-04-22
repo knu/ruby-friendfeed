@@ -9,6 +9,7 @@ $LOAD_PATH.unshift(Pathname($0).dirname.parent.join('lib'))
 
 require 'rubygems'
 require 'friendfeed'
+require 'friendfeed/unofficial'
 require 'main'
 require 'mechanize'
 require 'uri'
