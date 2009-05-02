@@ -59,52 +59,6 @@ module FriendFeed
       api_login(nickname, remote_key)
     end
 
-    # Gets an array of profile information of the authenticated user's
-    # imaginary friends, in a format similar to
-    # get_real_friends(). [unofficial]
-    def get_imaginary_friends
-      agent = get_login_agent()
-
-      page = agent.get(IMAGINARY_URI)
-      page.parser.xpath("//div[@class='name']//a[@class='l_person']").map { |person_a|
-        get_imaginary_friend(person_a['uid'])
-      }
-    end
-
-    # Gets profile information of one of the authenticated user's
-    # imaginary friends, in a format similar to
-    # get_profile(). [unofficial]
-    def get_imaginary_friend(id)
-      agent = get_login_agent()
-
-      profile_uri = IMAGINARY_URI + ("/users/%s" % URI.encode(id))
-      profile_page = agent.get(profile_uri)
-      parser = profile_page.parser
-      {
-        'id' => id,
-        'nickname' => parser.xpath("//h1/a/text()").to_s,
-        'profileUrl' => profile_uri.to_s,
-        'services' => parser.xpath("//div[@class='servicefilter']//a[@class='l_filterservice']").map { |service_a|
-          servicename = service_a['servicename']
-          serviceid = if servicename == "internal"
-                        nil
-                      else
-                        service_a['serviceid'] ||
-                          begin
-                            service_uri = profile_uri + ("?service=%s" % URI.encode(servicename))
-                            page = agent.get(service_uri)
-                            page.parser.xpath("//a[@class='l_refreshfeed']/@serviceid").to_s
-                          end
-                      end
-          {
-            'serviceid' => serviceid,
-            'name' => servicename,
-            'profileUrl' => (profile_uri + service_a['href']).to_s
-          }
-        },
-      }
-    end
-
     # Posts a request to an internal API of FriendFeed and returns
     # either a parser object for an HTML response or an object parsed
     # from a JSON response).  [unofficial]

@@ -126,9 +126,32 @@ module FriendFeed
     # subscribing to.
     def get_real_friends(nickname = @nickname)
       nickname or require_api_login
-      get_profiles(get_profile(@nickname)['subscriptions'].map { |subscription|
-          subscription['nickname']
-        })
+      nicknames = []
+      get_profile(@nickname)['subscriptions'].each { |subscription|
+        if nickname = subscription['nickname']
+          nicknames << nickname
+        end
+      }
+      get_profiles(nicknames)
+    end
+
+    # Gets an array of profile information of the authenticated user's
+    # imaginary friends.
+    def get_imaginary_friends
+      nickname or require_api_login
+      profiles = []
+      get_profile(@nickname)['subscriptions'].each { |subscription|
+        if subscription['nickname'].nil?
+          profiles << get_profile(subscription['id'])
+        end
+      }
+      profiles
+    end
+
+    # Gets profile information of one of the authenticated user's
+    # imaginary friends.
+    def get_imaginary_friend(id)
+      get_profile(id)
     end
 
     # Gets an array of the most recent public entries.
