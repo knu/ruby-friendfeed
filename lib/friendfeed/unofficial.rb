@@ -69,7 +69,7 @@ module FriendFeed
           'at' => agent.cookies.find { |cookie|
             cookie.domain == 'friendfeed.com' && cookie.name == 'AT'
           }.value
-        }.merge(query))
+        }.update(query))
       if page.respond_to?(:parser)
         parser = page.parser
         messages = parser.xpath("//div[@id='errormessage']/text()")
