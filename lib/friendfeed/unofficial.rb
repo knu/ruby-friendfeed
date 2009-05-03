@@ -145,9 +145,9 @@ module FriendFeed
         }
         profile_uri = ROOT_URI + ("/%s" % URI.encode(id))
         agent.get(profile_uri).parser.xpath("//div[@class='servicespreview']/a").each_with_index { |a, i|
-          href = profile_uri + a['href'].to_s
+          href = (profile_uri + a['href'].to_s).to_s
           break if profile_uri.route_to(href).relative?
-          services[i]['url'] = href
+          services[i]['profileUrl'] = href
         }
       else
         services = parser.xpath("//ul[@class='servicelist']/li/a").map { |a|
@@ -155,7 +155,7 @@ module FriendFeed
             'service' => a['class'].split.find { |a_class|
               a_class != 'service'
             },
-            'url' => a['href'].to_s,
+            'profileUrl' => a['href'].to_s,
           }
         }
       end
