@@ -21,7 +21,6 @@ module FriendFeed
     #
 
     LOGIN_URI     = ROOT_URI + "/account/login"
-    IMAGINARY_URI = ROOT_URI + "/settings/imaginary?num=9999"
 
     private
 
@@ -88,24 +87,96 @@ module FriendFeed
       end
     end
 
-    # Creates an imaginary friend of a given +nickname+ and returns a
-    # unique ID string on success.  Like other methods in general, an
-    # exception is raised on failure. [unofficial]
-    def create_imaginary_friend(nickname)
-      post(ROOT_URI + '/a/createimaginary', 'name' => nickname).xpath("//a[@class='l_userunsubscribe']/@uid").to_s
+    # Creates a new feed of a given (unique) +nickname+ and display
+    # +name+, and returns a unique ID string on success.  The +type+
+    # can be one of "group", "microblog" and "public".  Like other
+    # methods in general, an exception is raised on
+    # failure. [unofficial]
+    def create_group(nickname, name, type = 'group')
+      post(ROOT_URI + '/a/createfeed', 'nickname' => nickname, 'name' => name, 'type' => type).xpath("(//a[@class='l_feedinvite'])[1]/@sid").to_s
     end
 
-    # Renames an imaginary friend specified by a unique ID to a given
-    # +nickname+. [unofficial]
-    def rename_imaginary_friend(id, nickname)
-      post(ROOT_URI + '/a/imaginaryname', 'user' => id, 'name' => nickname)
+    EDIT_GROUP_URI = ROOT_URI + '/a/editprofile'
+
+    # Gets profile information of a group specified by a unique
+    # ID. [unofficial]
+    def get_group(id)
+      parser = post(ROOT_URI + '/a/profiledialog', 'stream' => id)['html_parser']
+      form = parser.xpath("//form[1]")
+      hash = { 'stream' => id }
+      form.xpath(".//input").each { |input|
+        case input['type'].downcase
+        when 'text'
+          hash[input['name']] = input['value']
+        when 'radio', 'checkbox'
+          if input['checked']
+            value = input['value']
+            if value && !value.empty?
+              hash[input['name']] = value
+            end
+          end
+        end
+      }
+      form.xpath(".//textarea").each { |input|
+        hash[input['name']] = input.text
+      }
+      hash
     end
 
-    # Adds a feed to an imaginary friend specified by a unique ID.
-    # Specify 'isstatus' => 'on' to display entries as messages (no
-    # link), and 'importcomment' => 'on' to include entry description
-    # as a comment. [unofficial]
-    def add_service_to_imaginary_friend(id, service, options = nil)
+    def get_group_services(id)
+      room = get_room_profile(id)
+      admin_p = room['administrators'].any? { |profile|
+        profile['nickname'] == nickname
+      }
+
+      agent = get_login_agent()
+
+      services_uri = ROOT_URI + ("/%s/services" % URI.encode(id))
+      parser = agent.get(services_uri).parser
+
+      if admin_p
+        services = parser.xpath("//*[@class='active']//ul[@class='servicelist']/li/a").map { |a|
+          {
+            'service' => a['class'].split.find { |a_class|
+              a_class != 'l_editservice' && a_class != 'service'
+            },
+            'serviceid' => a['serviceid'].to_s,
+          }
+        }
+        profile_uri = ROOT_URI + ("/%s" % URI.encode(id))
+        agent.get(profile_uri).parser.xpath("//div[@class='servicespreview']/a").each_with_index { |a, i|
+          href = profile_uri + a['href'].to_s
+          break if profile_uri.route_to(href).relative?
+          services[i]['url'] = href
+        }
+      else
+        services = parser.xpath("//ul[@class='servicelist']/li/a").map { |a|
+          {
+            'service' => a['class'].split.find { |a_class|
+              a_class != 'service'
+            },
+            'url' => a['href'].to_s,
+          }
+        }
+      end
+      services
+    end
+
+    # Edits profile information of a group specified by a unique ID.
+    # Supported fields are 'nickname', 'name', 'description', 'access'
+    # ('private', 'semipublic' or 'public'), and 'anyoneinvite' (none
+    # or '1').  [unofficial]
+    def edit_group(id, hash)
+      param_hash = get_group(id)
+      param_hash.update(hash)
+      post(EDIT_GROUP_URI, param_hash)
+    end
+
+    # Adds a feed to a group specified by a unique ID.  Specify
+    # 'isstatus' => 'on' to display entries as messages (no link), and
+    # 'importcomment' => 'on' to include entry description as a
+    # comment. [unofficial]
+    def add_service_to_group(id, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -114,23 +185,21 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Edits a service of an imaginary friend specified by a unique
+    # Edits a service of a group specified by a unique
     # ID. [unofficial]
-    def edit_service_of_imaginary_friend(id, serviceid, service, options = nil)
+    def edit_service_of_group(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
         'serviceid' => serviceid,
-        'url' => url,
       }
       params.update(options) if options
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Removes a service of an imaginary friend specified by a unique
-    # ID.  Specify 'deleteentries' => 'on' to delete entries
-    # also. [unofficial]
-    def remove_service_from_imaginary_friend(id, serviceid, service, options = nil)
+    # Removes a service of a group specified by a unique ID.  Specify
+    # 'deleteentries' => 'on' to delete entries also. [unofficial]
+    def remove_service_from_group(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -140,68 +209,66 @@ module FriendFeed
       post(ROOT_URI + '/a/removeservice', params)
     end
 
-    # Adds a feed to an imaginary friend specified by a unique ID.
+    # Adds a feed to a group specified by a unique ID.  Specify
+    # 'isstatus' => 'on' to display entries as messages (no link), and
+    # 'importcomment' => 'on' to include entry description as a
+    # comment. [unofficial]
+    def add_feed_to_group(id, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      add_service_to_group(id, 'feed', options)
+    end
+
+    # Adds a Twitter service to a group specified by a unique
+    # ID. [unofficial]
+    def add_twitter_to_group(id, twitter_name)
+      add_service_to_group(id, 'twitter', 'username' => twitter_name)
+    end
+
+    # Edits a feed of a group specified by a unique ID.  Specify
+    # 'isstatus' => 'on' to display entries as messages (no link), and
+    # 'importcomment' => 'on' to include entry description as a
+    # comment. [unofficial]
+    def edit_feed_of_group(id, serviceid, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      add_service_to_group(id, 'feed', options)
+    end
+
+    # Edits a Twitter service of a group specified by a unique ID.
     # Specify 'isstatus' => 'on' to display entries as messages (no
     # link), and 'importcomment' => 'on' to include entry description
     # as a comment. [unofficial]
-    def add_feed_to_imaginary_friend(id, url, options = nil)
+    def edit_twitter_of_group(id, serviceid, twitter_name)
+      edit_service_of_group(id, serviceid, 'twitter', 'username' => twitter_name)
+    end
+
+    # Removes a feed from a group specified by a unique ID.  Specify
+    # 'deleteentries' => 'on' to delete entries also. [unofficial]
+    def remove_feed_from_group(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
-      add_service_to_imaginary_friend(id, 'feed', options)
+      remove_service_from_group(id, serviceid, 'feed', options = nil)
     end
 
-    # Adds a Twitter service to an imaginary friend specified by a
-    # unique ID. [unofficial]
-    def add_twitter_to_imaginary_friend(id, twitter_name)
-      add_service_to_imaginary_friend(id, 'twitter', 'username' => twitter_name)
-    end
-
-    # Edits a feed of an imaginary friend specified by a unique ID.
-    # Specify 'isstatus' => 'on' to display entries as messages (no
-    # link), and 'importcomment' => 'on' to include entry description
-    # as a comment. [unofficial]
-    def edit_feed_of_imaginary_friend(id, serviceid, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      add_service_to_imaginary_friend(id, 'feed', options)
-    end
-
-    # Edits a Twitter service of an imaginary friend specified by a
-    # unique ID.  Specify 'isstatus' => 'on' to display entries as
-    # messages (no link), and 'importcomment' => 'on' to include entry
-    # description as a comment. [unofficial]
-    def edit_twitter_of_imaginary_friend(id, serviceid, twitter_name)
-      edit_service_of_imaginary_friend(id, serviceid, 'twitter', 'username' => twitter_name)
-    end
-
-    # Removes a feed from an imaginary friend specified by a unique
-    # ID.  Specify 'deleteentries' => 'on' to delete entries
+    # Removes a Twitter service from a group specified by a unique ID.
+    # Specify 'deleteentries' => 'on' to delete entries
     # also. [unofficial]
-    def remove_feed_from_imaginary_friend(id, serviceid, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      remove_service_from_imaginary_friend(id, serviceid, 'feed', options = nil)
-    end
-
-    # Removes a Twitter service from an imaginary friend specified by
-    # a unique ID.  Specify 'deleteentries' => 'on' to delete entries
-    # also. [unofficial]
-    def remove_twitter_from_imaginary_friend(id, serviceid, twitter_name)
+    def remove_twitter_from_group(id, serviceid, twitter_name, options = nil)
       params = { 'username' => twitter_name }
       params.update(options) if options
-      remove_service_from_imaginary_friend(id, serviceid, 'twitter', options = nil)
+      remove_service_from_group(id, serviceid, 'twitter', options = nil)
     end
 
-    # Changes the picture of an imaginary friend. [unofficial]
-    def change_picture_of_imaginary_friend(id, io)
+    # Changes the picture of a group. [unofficial]
+    def change_picture_of_group(id, io)
       post(ROOT_URI + '/a/changepicture', 'stream' => id,
         'picture' => io)
     end
 
-    # Removes an imaginary friend specified by a unique
-    # ID. [unofficial]
-    def remove_imaginary_friend(id)
-      post(ROOT_URI + '/a/userunsubscribe', 'user' => id)
+    # Removes a group specified by a unique ID. [unofficial]
+    def unsubscribe_from_group(id)
+      post(ROOT_URI + '/a/unsubscribe', 'stream' => id)
     end
   end
 end
