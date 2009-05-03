@@ -80,6 +80,10 @@ module FriendFeed
         json = JSON.parse(page.body)
         message = json['error'] and
           raise message
+        if html_frag = json['html']
+          html_body = '<html><body>' << html_frag << '</body></html>'
+          json['html_parser'] = WWW::Mechanize.html_parser.parse(html_body)
+        end
         json
       end
     end
