@@ -8,6 +8,7 @@ require 'pathname'
 $LOAD_PATH.unshift(Pathname($0).dirname.parent.join('lib'))
 
 require 'rubygems'
+require 'digest'
 require 'friendfeed'
 require 'friendfeed/unofficial'
 require 'main'
@@ -155,6 +156,17 @@ Main {
         }
       }
 
+      putinfo "Checking groups in FriendFeed..."
+      ffcli.get_profile['rooms'].each { |room|
+        ffcli.get_group_services(room['nickname']).each { |service|
+          url = service['profileUrl'] or next
+          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
+            putinfo 'Found a Twitter friend %s in FriendFeed (group)', name
+            subscribed_imag << name
+          end
+        }
+      }
+
       Status('friends_subscribed_real') { subscribed_real.sort }
       Status('friends_subscribed_imag') { subscribed_imag.sort }
 
@@ -194,57 +206,23 @@ Main {
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary user for %s', name
-        id = ffcli.create_imaginary_friend('(%s)' % name)
-        ffcli.add_twitter_to_imaginary_friend(id, name)
+        uid = Digest::SHA1.hexdigest('%s:twitter:%s' % [Config('friendfeed.username'), name])[0...20]
+        id =
+          begin
+            ffcli.create_group(uid, '(%s)' % name)
+          rescue
+            ffcli.get_room_profile(uid)['id']
+          end
+        ffcli.add_twitter_to_group(id, name)
         if picture_urls.key?(name)
           putinfo 'Setting the picture of %s', name
           t = Tempfile.open("picture")
           t.write agent.get_file(picture_urls[name])
           t.close
           File.open(t.path) { |f|
-            ffcli.change_picture_of_imaginary_friend(id, f)
+            ffcli.change_picture_of_group(id, f)
           }
         end
-      }
-    end
-  end
-
-  mode 'picture' do
-    description 'Set pictures of imaginary friends to those of Twitter'
-
-    def run
-      require 'set'
-
-      ffcli = friendfeed_client()
-
-      subscribed_imag = Status('friends_subscribed_imag')
-
-      picture_urls = {}
-
-      twitter_client().all_friends.each { |friend|
-        name = friend.screen_name
-        next unless subscribed_imag.include?(name)
-
-        picture_urls[name] = friend.profile_image_url
-      }
-
-      agent = WWW::Mechanize.new
-
-      ffcli.get_imaginary_friends.each { |profile|
-        profile['services'].each { |service|
-          url = service['profileUrl'] or next
-          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
-            if picture_urls.key?(name)
-              putinfo 'Setting the picture of %s', name
-              t = Tempfile.open("picture")
-              t.write agent.get_file(picture_urls[name])
-              t.close
-              File.open(t.path) { |f|
-                ffcli.change_picture_of_imaginary_friend(profile['id'], f)
-              }
-            end
-          end
-        }
       }
     end
   end
