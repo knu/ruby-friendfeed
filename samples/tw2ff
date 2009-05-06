@@ -205,23 +205,22 @@ Main {
       agent = WWW::Mechanize.new
 
       to_subscribe.each { |name|
-        putinfo 'Creating an imaginary user for %s', name
+        putinfo 'Creating a private group for %s', name
         uid = Digest::SHA1.hexdigest('%s:twitter:%s' % [Config('friendfeed.username'), name])[0...20]
-        id =
-          begin
-            ffcli.create_group(uid, '(%s)' % name)
-          rescue
-            ffcli.get_room_profile(uid)['id']
+        begin
+          id = ffcli.create_group(uid, '(%s)' % name)
+          ffcli.add_twitter(id, name)
+          if picture_urls.key?(name)
+            putinfo 'Setting the picture of %s', name
+            t = Tempfile.open("picture")
+            t.write agent.get_file(picture_urls[name])
+            t.close
+            File.open(t.path) { |f|
+              ffcli.change_picture(id, f)
+            }
           end
-        ffcli.add_twitter(id, name)
-        if picture_urls.key?(name)
-          putinfo 'Setting the picture of %s', name
-          t = Tempfile.open("picture")
-          t.write agent.get_file(picture_urls[name])
-          t.close
-          File.open(t.path) { |f|
-            ffcli.change_picture(id, f)
-          }
+        rescue => e
+          p e
         end
       }
     end
