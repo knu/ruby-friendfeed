@@ -87,6 +87,44 @@ module FriendFeed
       end
     end
 
+    # Gets a list of services of a user or a room of a given
+    # +nickname+, defaulted to the authenticated user.
+    def get_services(nickname = @nickname)
+      agent = get_login_agent()
+
+      services_uri = ROOT_URI + ("/%s/services" % URI.encode(nickname))
+      parser = agent.get(services_uri).parser
+
+      active_servicelist = parser.xpath("//*[@class='active']//ul[@class='servicelist']")
+
+      if !active_servicelist.empty?
+        services = active_servicelist.xpath("./li/a").map { |a|
+          {
+            'service' => a['class'].split.find { |a_class|
+              a_class != 'l_editservice' && a_class != 'service'
+            },
+            'serviceid' => a['serviceid'].to_s,
+          }
+        }
+        profile_uri = ROOT_URI + ("/%s" % URI.encode(nickname))
+        agent.get(profile_uri).parser.xpath("//div[@class='servicespreview']/a").each_with_index { |a, i|
+          href = (profile_uri + a['href'].to_s).to_s
+          break if profile_uri.route_to(href).relative?
+          services[i]['profileUrl'] = href
+        }
+      else
+        services = parser.xpath("//ul[@class='servicelist']/li/a").map { |a|
+          {
+            'service' => a['class'].split.find { |a_class|
+              a_class != 'service'
+            },
+            'profileUrl' => a['href'].to_s,
+          }
+        }
+      end
+      services
+    end
+
     # Creates a new feed of a given (unique) +nickname+ and display
     # +name+, and returns a unique ID string on success.  The +type+
     # can be one of "group", "microblog" and "public".  Like other
@@ -121,45 +159,6 @@ module FriendFeed
         hash[input['name']] = input.text
       }
       hash
-    end
-
-    def get_group_services(id)
-      room = get_room_profile(id)
-      admin_p = room['administrators'].any? { |profile|
-        profile['nickname'] == nickname
-      }
-
-      agent = get_login_agent()
-
-      services_uri = ROOT_URI + ("/%s/services" % URI.encode(id))
-      parser = agent.get(services_uri).parser
-
-      if admin_p
-        services = parser.xpath("//*[@class='active']//ul[@class='servicelist']/li/a").map { |a|
-          {
-            'service' => a['class'].split.find { |a_class|
-              a_class != 'l_editservice' && a_class != 'service'
-            },
-            'serviceid' => a['serviceid'].to_s,
-          }
-        }
-        profile_uri = ROOT_URI + ("/%s" % URI.encode(id))
-        agent.get(profile_uri).parser.xpath("//div[@class='servicespreview']/a").each_with_index { |a, i|
-          href = (profile_uri + a['href'].to_s).to_s
-          break if profile_uri.route_to(href).relative?
-          services[i]['profileUrl'] = href
-        }
-      else
-        services = parser.xpath("//ul[@class='servicelist']/li/a").map { |a|
-          {
-            'service' => a['class'].split.find { |a_class|
-              a_class != 'service'
-            },
-            'profileUrl' => a['href'].to_s,
-          }
-        }
-      end
-      services
     end
 
     # Edits profile information of a group specified by a unique ID.
