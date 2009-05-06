@@ -171,11 +171,11 @@ module FriendFeed
       post(EDIT_GROUP_URI, param_hash)
     end
 
-    # Adds a feed to a group specified by a unique ID.  Specify
-    # 'isstatus' => 'on' to display entries as messages (no link), and
-    # 'importcomment' => 'on' to include entry description as a
-    # comment. [unofficial]
-    def add_service_to_group(id, service, options = nil)
+    # Adds a feed to the authenticated user or a group specified by a
+    # unique ID.  Specify 'isstatus' => 'on' to display entries as
+    # messages (no link), and 'importcomment' => 'on' to include entry
+    # description as a comment. [unofficial]
+    def add_service(id, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -184,9 +184,9 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Edits a service of a group specified by a unique
-    # ID. [unofficial]
-    def edit_service_of_group(id, serviceid, service, options = nil)
+    # Edits a service of the authenticated user or a group specified
+    # by a unique ID. [unofficial]
+    def edit_service(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -196,9 +196,10 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Removes a service of a group specified by a unique ID.  Specify
-    # 'deleteentries' => 'on' to delete entries also. [unofficial]
-    def remove_service_from_group(id, serviceid, service, options = nil)
+    # Removes a service of the authenticated user or a group specified
+    # by a unique ID.  Specify 'deleteentries' => 'on' to delete
+    # entries also. [unofficial]
+    def remove_service(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
         'service' => service,
@@ -208,65 +209,77 @@ module FriendFeed
       post(ROOT_URI + '/a/removeservice', params)
     end
 
-    # Adds a feed to a group specified by a unique ID.  Specify
-    # 'isstatus' => 'on' to display entries as messages (no link), and
-    # 'importcomment' => 'on' to include entry description as a
-    # comment. [unofficial]
-    def add_feed_to_group(id, url, options = nil)
+    # Refreshes a feed of the authenticated user or a group specified
+    # by a unique ID. [unofficial]
+    def refresh_service(id, serviceid, service, options = nil)
+      params = {
+        'refresh' => 1,
+      }
+      params.update(options) if options
+      edit_service(id, serviceid, service, params)
+    end
+
+    # Adds a feed to the authenticated user or a group specified by a
+    # unique ID.  Specify 'isstatus' => 'on' to display entries as
+    # messages (no link), and 'importcomment' => 'on' to include entry
+    # description as a comment. [unofficial]
+    def add_feed(id, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
-      add_service_to_group(id, 'feed', options)
+      add_service(id, 'feed', options)
     end
 
-    # Adds a Twitter service to a group specified by a unique
-    # ID. [unofficial]
-    def add_twitter_to_group(id, twitter_name)
-      add_service_to_group(id, 'twitter', 'username' => twitter_name)
+    # Adds a Twitter service to the authenticated user or a group
+    # specified by a unique ID. [unofficial]
+    def add_twitter(id, twitter_name)
+      add_service(id, 'twitter', 'username' => twitter_name)
     end
 
-    # Edits a feed of a group specified by a unique ID.  Specify
-    # 'isstatus' => 'on' to display entries as messages (no link), and
-    # 'importcomment' => 'on' to include entry description as a
-    # comment. [unofficial]
-    def edit_feed_of_group(id, serviceid, url, options = nil)
+    # Edits a feed of the authenticated user or a group specified by a
+    # unique ID.  Specify 'isstatus' => 'on' to display entries as
+    # messages (no link), and 'importcomment' => 'on' to include entry
+    # description as a comment. [unofficial]
+    def edit_feed(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
-      add_service_to_group(id, 'feed', options)
+      add_service(id, 'feed', options)
     end
 
-    # Edits a Twitter service of a group specified by a unique ID.
-    # Specify 'isstatus' => 'on' to display entries as messages (no
-    # link), and 'importcomment' => 'on' to include entry description
-    # as a comment. [unofficial]
-    def edit_twitter_of_group(id, serviceid, twitter_name)
-      edit_service_of_group(id, serviceid, 'twitter', 'username' => twitter_name)
+    # Edits a Twitter service of the authenticated user or a group
+    # specified by a unique ID.  Specify 'isstatus' => 'on' to display
+    # entries as messages (no link), and 'importcomment' => 'on' to
+    # include entry description as a comment. [unofficial]
+    def edit_twitter(id, serviceid, twitter_name)
+      edit_service(id, serviceid, 'twitter', 'username' => twitter_name)
     end
 
-    # Removes a feed from a group specified by a unique ID.  Specify
+    # Removes a feed from the authenticated user or a group specified by a unique ID.  Specify
     # 'deleteentries' => 'on' to delete entries also. [unofficial]
-    def remove_feed_from_group(id, serviceid, url, options = nil)
+    def remove_feed(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
-      remove_service_from_group(id, serviceid, 'feed', options = nil)
+      remove_service(id, serviceid, 'feed', options = nil)
     end
 
-    # Removes a Twitter service from a group specified by a unique ID.
-    # Specify 'deleteentries' => 'on' to delete entries
-    # also. [unofficial]
-    def remove_twitter_from_group(id, serviceid, twitter_name, options = nil)
+    # Removes a Twitter service from the authenticated user or a group
+    # specified by a unique ID.  Specify 'deleteentries' => 'on' to
+    # delete entries also. [unofficial]
+    def remove_twitter(id, serviceid, twitter_name, options = nil)
       params = { 'username' => twitter_name }
       params.update(options) if options
-      remove_service_from_group(id, serviceid, 'twitter', options = nil)
+      remove_service(id, serviceid, 'twitter', options = nil)
     end
 
-    # Changes the picture of a group. [unofficial]
-    def change_picture_of_group(id, io)
+    # Changes the picture of the authenticated user or a
+    # group. [unofficial]
+    def change_picture(id, io)
       post(ROOT_URI + '/a/changepicture', 'stream' => id,
         'picture' => io)
     end
 
-    # Removes a group specified by a unique ID. [unofficial]
-    def unsubscribe_from_group(id)
+    # Unsubscribe from a user or a group specified by a unique
+    # ID. [unofficial]
+    def unsubscribe(id)
       post(ROOT_URI + '/a/unsubscribe', 'stream' => id)
     end
   end
