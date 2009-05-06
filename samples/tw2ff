@@ -303,7 +303,7 @@ Main {
         items << [timestamp, text, url]
       }
 
-      twitter_client().timeline.each { |status| 
+      twitter_client().friends_timeline.each { |status| 
         user = status.user
         next if !user.protected
         name = user.screen_name
