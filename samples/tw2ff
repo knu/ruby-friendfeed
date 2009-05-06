@@ -158,7 +158,7 @@ Main {
 
       putinfo "Checking groups in FriendFeed..."
       ffcli.get_profile['rooms'].each { |room|
-        ffcli.get_group_services(room['nickname']).each { |service|
+        ffcli.get_services(room['nickname']).each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed (group)', name
@@ -213,14 +213,14 @@ Main {
           rescue
             ffcli.get_room_profile(uid)['id']
           end
-        ffcli.add_twitter_to_group(id, name)
+        ffcli.add_twitter(id, name)
         if picture_urls.key?(name)
           putinfo 'Setting the picture of %s', name
           t = Tempfile.open("picture")
           t.write agent.get_file(picture_urls[name])
           t.close
           File.open(t.path) { |f|
-            ffcli.change_picture_of_group(id, f)
+            ffcli.change_picture(id, f)
           }
         end
       }
