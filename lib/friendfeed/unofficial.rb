@@ -279,7 +279,7 @@ module FriendFeed
 
     # Unsubscribe from a user or a group specified by a unique
     # ID. [unofficial]
-    def unsubscribe(id)
+    def unsubscribe_from_imaginary_friend(id)
       post(ROOT_URI + '/a/unsubscribe', 'stream' => id)
     end
   end
