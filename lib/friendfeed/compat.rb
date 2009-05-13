@@ -37,3 +37,13 @@ class String
     raise TypeError, format("can't convert %s to %s (%s#to_str gives %s)", obj.class, self.class, obj.class, nobj.class)
   end unless self.respond_to?(:try_convert)
 end
+
+class Array
+  def self.try_convert(obj)
+    return obj if obj.instance_of?(self)
+    return nil if !obj.respond_to?(:to_ary)
+    nobj = obj.to_ary 
+    return nobj if nobj.instance_of?(self)
+    raise TypeError, format("can't convert %s to %s (%s#to_ary gives %s)", obj.class, self.class, obj.class, nobj.class)
+  end unless self.respond_to?(:try_convert)
+end
