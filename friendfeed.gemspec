@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.specification_version = 2
   s.name = "friendfeed"
-  s.version = "0.1.0"
+  s.version = "0.1.1"
   s.required_rubygems_version = Gem::Requirement.new(">= 0")
   s.authors = ["Akinori MUSHA"]
-  s.date = %q{2009-05-14}
+  s.date = %q{2009-05-15}
   s.summary = "A Ruby module that provides access to FriendFeed API's."
   s.description = s.summary
   s.email = "knu@idaemons.org"
