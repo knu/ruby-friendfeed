@@ -171,10 +171,10 @@ module FriendFeed
       post(EDIT_GROUP_URI, param_hash)
     end
 
-    # Adds a feed to the authenticated user or a group specified by a
-    # unique ID.  Specify 'isstatus' => 'on' to display entries as
-    # messages (no link), and 'importcomment' => 'on' to include entry
-    # description as a comment. [unofficial]
+    # Adds a feed to the authenticated user, a group or an imaginary
+    # friend specified by a unique ID.  Specify 'isstatus' => 'on' to
+    # display entries as messages (no link), and 'importcomment' =>
+    # 'on' to include entry description as a comment. [unofficial]
     def add_service(id, service, options = nil)
       params = {
         'stream' => id,
@@ -184,8 +184,8 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Edits a service of the authenticated user or a group specified
-    # by a unique ID. [unofficial]
+    # Edits a service of the authenticated user, a group or an
+    # imaginary friend specified by a unique ID. [unofficial]
     def edit_service(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
@@ -196,9 +196,9 @@ module FriendFeed
       post(ROOT_URI + '/a/configureservice', params)
     end
 
-    # Removes a service of the authenticated user or a group specified
-    # by a unique ID.  Specify 'deleteentries' => 'on' to delete
-    # entries also. [unofficial]
+    # Removes a service of the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify
+    # 'deleteentries' => 'on' to delete entries also. [unofficial]
     def remove_service(id, serviceid, service, options = nil)
       params = {
         'stream' => id,
@@ -209,8 +209,8 @@ module FriendFeed
       post(ROOT_URI + '/a/removeservice', params)
     end
 
-    # Refreshes a feed of the authenticated user or a group specified
-    # by a unique ID. [unofficial]
+    # Refreshes a feed of the authenticated user, a group or an
+    # imaginary friend specified by a unique ID. [unofficial]
     def refresh_service(id, serviceid, service, options = nil)
       params = {
         'refresh' => 1,
@@ -219,41 +219,43 @@ module FriendFeed
       edit_service(id, serviceid, service, params)
     end
 
-    # Adds a feed to the authenticated user or a group specified by a
-    # unique ID.  Specify 'isstatus' => 'on' to display entries as
-    # messages (no link), and 'importcomment' => 'on' to include entry
-    # description as a comment. [unofficial]
+    # Adds a feed to the authenticated user, a group or an imaginary
+    # friend specified by a unique ID.  Specify 'isstatus' => 'on' to
+    # display entries as messages (no link), and 'importcomment' =>
+    # 'on' to include entry description as a comment. [unofficial]
     def add_feed(id, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
       add_service(id, 'feed', options)
     end
 
-    # Adds a Twitter service to the authenticated user or a group
-    # specified by a unique ID. [unofficial]
+    # Adds a Twitter service to the authenticated user, a group or an
+    # imaginary friend specified by a unique ID. [unofficial]
     def add_twitter(id, twitter_name)
       add_service(id, 'twitter', 'username' => twitter_name)
     end
 
-    # Edits a feed of the authenticated user or a group specified by a
-    # unique ID.  Specify 'isstatus' => 'on' to display entries as
-    # messages (no link), and 'importcomment' => 'on' to include entry
-    # description as a comment. [unofficial]
+    # Edits a feed of the authenticated user, a group or an imaginary
+    # friend specified by a unique ID.  Specify 'isstatus' => 'on' to
+    # display entries as messages (no link), and 'importcomment' =>
+    # 'on' to include entry description as a comment. [unofficial]
     def edit_feed(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
       add_service(id, 'feed', options)
     end
 
-    # Edits a Twitter service of the authenticated user or a group
-    # specified by a unique ID.  Specify 'isstatus' => 'on' to display
-    # entries as messages (no link), and 'importcomment' => 'on' to
-    # include entry description as a comment. [unofficial]
+    # Edits a Twitter service of the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify 'isstatus'
+    # => 'on' to display entries as messages (no link), and
+    # 'importcomment' => 'on' to include entry description as a
+    # comment. [unofficial]
     def edit_twitter(id, serviceid, twitter_name)
       edit_service(id, serviceid, 'twitter', 'username' => twitter_name)
     end
 
-    # Removes a feed from the authenticated user or a group specified by a unique ID.  Specify
+    # Removes a feed from the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify
     # 'deleteentries' => 'on' to delete entries also. [unofficial]
     def remove_feed(id, serviceid, url, options = nil)
       params = { 'url' => url }
@@ -261,26 +263,52 @@ module FriendFeed
       remove_service(id, serviceid, 'feed', options = nil)
     end
 
-    # Removes a Twitter service from the authenticated user or a group
-    # specified by a unique ID.  Specify 'deleteentries' => 'on' to
-    # delete entries also. [unofficial]
+    # Removes a Twitter service from the authenticated user, a group
+    # or an imaginary friend specified by a unique ID.  Specify
+    # 'deleteentries' => 'on' to delete entries also. [unofficial]
     def remove_twitter(id, serviceid, twitter_name, options = nil)
       params = { 'username' => twitter_name }
       params.update(options) if options
       remove_service(id, serviceid, 'twitter', options = nil)
     end
 
-    # Changes the picture of the authenticated user or a
-    # group. [unofficial]
+    # Changes the picture of the authenticated user, a group or an
+    # imaginary friend. [unofficial]
     def change_picture(id, io)
       post(ROOT_URI + '/a/changepicture', 'stream' => id,
         'picture' => io)
     end
 
-    # Unsubscribe from a user or a group specified by a unique
-    # ID. [unofficial]
-    def unsubscribe_from_imaginary_friend(id)
+    # Unsubscribe from a friend, a group or an imaginary friend
+    # specified by a unique ID. [unofficial]
+    def unsubscribe_from(id)
       post(ROOT_URI + '/a/unsubscribe', 'stream' => id)
+    end
+
+    # Creates an imaginary friend of a given +nickname+ and returns a
+    # unique ID string on success.  Like other methods in general, an
+    # exception is raised on failure. [unofficial]
+    def create_imaginary_friend(nickname)
+      post(ROOT_URI + '/a/createimaginary', 'name' => nickname).xpath("//*[@id='serviceseditor']/@streamid").to_s
+    end
+
+    # Renames an imaginary friend specified by a unique ID to a given
+    # +nickname+. [unofficial]
+    def rename_imaginary_friend(id, nickname)
+      parser = post(ROOT_URI + '/a/profiledialog', 'stream' => id)['html_parser']
+      form = parser.xpath("//form[1]")
+      hash = { 'stream' => id }
+      form.xpath(".//input").each { |input|
+        case input['type'].downcase
+        when 'text'
+          hash[input['name']] = input['value']
+        end
+      }
+      form.xpath(".//textarea").each { |input|
+        hash[input['name']] = input.text
+      }
+      hash['name'] = nickname
+      post(ROOT_URI + '/a/editprofile', hash)
     end
   end
 end
