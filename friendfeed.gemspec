@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.specification_version = 2
   s.name = "friendfeed"
-  s.version = "0.1.1"
+  s.version = "0.1.2"
   s.required_rubygems_version = Gem::Requirement.new(">= 0")
   s.authors = ["Akinori MUSHA"]
   s.date = %q{2009-05-15}
