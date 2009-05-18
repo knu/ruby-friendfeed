@@ -242,7 +242,7 @@ module FriendFeed
     def edit_feed(id, serviceid, url, options = nil)
       params = { 'url' => url }
       params.update(options) if options
-      add_service(id, 'feed', options)
+      edit_service(id, 'feed', options)
     end
 
     # Edits a Twitter service of the authenticated user, a group or an
