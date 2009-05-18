@@ -229,6 +229,17 @@ module FriendFeed
       add_service(id, 'feed', options)
     end
 
+    # Adds a blog feed to the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify 'multiauth'
+    # => 'on' when the blog has multiple authors, and 'author' =>
+    # '(name)' to limit entries to those written by a specific
+    # author. [unofficial]
+    def add_blog(id, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      add_service(id, 'blog', options)
+    end
+
     # Adds a Twitter service to the authenticated user, a group or an
     # imaginary friend specified by a unique ID. [unofficial]
     def add_twitter(id, twitter_name)
@@ -243,6 +254,17 @@ module FriendFeed
       params = { 'url' => url }
       params.update(options) if options
       edit_service(id, 'feed', options)
+    end
+
+    # Adds a blog feed to the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify 'multiauth'
+    # => 'on' when the blog has multiple authors, and 'author' =>
+    # '(name)' to limit entries to those written by a specific
+    # author. [unofficial]
+    def edit_blog(id, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      edit_service(id, 'blog', options)
     end
 
     # Edits a Twitter service of the authenticated user, a group or an
@@ -261,6 +283,15 @@ module FriendFeed
       params = { 'url' => url }
       params.update(options) if options
       remove_service(id, serviceid, 'feed', options = nil)
+    end
+
+    # Removes a blog feed from the authenticated user, a group or an
+    # imaginary friend specified by a unique ID.  Specify
+    # 'deleteentries' => 'on' to delete entries also. [unofficial]
+    def remove_blog(id, serviceid, url, options = nil)
+      params = { 'url' => url }
+      params.update(options) if options
+      remove_service(id, serviceid, 'blog', options = nil)
     end
 
     # Removes a Twitter service from the authenticated user, a group
