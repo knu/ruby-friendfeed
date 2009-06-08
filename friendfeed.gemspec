@@ -37,6 +37,7 @@ manipulating friends, groups and services for your personal purposes.
   s.homepage = %q{http://github.com/knu/ruby-friendfeed}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
+  s.rubyforge_project = %q{friendfeed}
   s.rubygems_version = %q{1.3.4}
   s.summary = %q{A Ruby library to provide access to FriendFeed API's}
   s.test_files = [
