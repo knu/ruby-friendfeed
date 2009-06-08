@@ -118,7 +118,7 @@ module FriendFeed
             'service' => a['class'].split.find { |a_class|
               a_class != 'service'
             },
-            'profileUrl' => a['href'].to_s,
+            'profileUrl' => (services_uri + a['href'].to_s).to_s,
           }
         }
       end
