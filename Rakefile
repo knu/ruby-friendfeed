@@ -15,6 +15,7 @@ manipulating friends, groups and services for your personal purposes.
     gem.email = "knu@idaemons.org"
     gem.homepage = "http://github.com/knu/ruby-friendfeed"
     gem.authors = ["Akinori MUSHA"]
+    gem.rubyforge_project = "friendfeed"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
 
