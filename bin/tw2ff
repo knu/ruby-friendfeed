@@ -50,15 +50,7 @@ rescue => e
   
   STDERR.print <<EOM
 The key "#{keypath}" is missing in #{ConfigFile()}.
-Please edit the file to look like the following:
-
---- 
-friendfeed: 
-  username: "username"
-  password: "password"
-twitter: 
-  username: "username"
-  password: "password"
+Please run "#{$0} config" and fill out necessary information.
 EOM
   exit 1
 end
@@ -121,6 +113,28 @@ Main {
 
   def run
     print usage.to_s
+  end
+
+  mode 'config' do
+    description 'Edit the configuration file'
+
+    def run
+      if !File.exist?(ConfigFile())
+        File.open(ConfigFile(), 'w') { |f|
+          f.print <<EOF
+--- 
+friendfeed: 
+  username: "username"
+  password: "password"
+twitter: 
+  username: "username"
+  password: "password"
+EOF
+        }
+      end
+
+      system ENV['VISUAL'] || ENV['EDITOR'] || 'vi', ConfigFile()
+    end
   end
   
   mode 'sync' do
