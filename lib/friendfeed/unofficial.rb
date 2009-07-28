@@ -53,7 +53,7 @@ module FriendFeed
       } and raise 'Login failed'
 
       page = @login_agent.get(ROOT_URI + "/account/api")
-      remote_key = page.parser.xpath("//td[text()='FriendFeed remote key:']/following-sibling::td[1]/text()").to_s
+      remote_key = page.parser.xpath("(//table[@class='remotekey']//td[@class='value'])[2]/text()").to_s
 
       api_login(nickname, remote_key)
     end

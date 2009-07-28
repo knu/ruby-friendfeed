@@ -262,7 +262,7 @@ EOF
             user = reply.user
             next if user.protected
             name = user.screen_name
-            next if friends.include?(name)
+            #next if friends.include?(name)
             text = '%s: %s' % [name, reply.text]
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
