@@ -213,10 +213,11 @@ module FriendFeed
     # imaginary friend specified by a unique ID. [unofficial]
     def refresh_service(id, serviceid, service, options = nil)
       params = {
-        'refresh' => 1,
+        'stream' => id,
+        'serviceid' => serviceid,
       }
       params.update(options) if options
-      edit_service(id, serviceid, service, params)
+      post(ROOT_URI + '/a/crawlservice', params)
     end
 
     # Adds a feed to the authenticated user, a group or an imaginary
