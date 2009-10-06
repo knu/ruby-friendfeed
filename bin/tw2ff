@@ -343,4 +343,18 @@ EOF
       }
     end
   end
+  
+  mode 'refresh' do
+    description 'Refresh the user services'
+
+    def run
+      ffcli = friendfeed_client()
+      profile = ffcli.get_profile
+
+      ffcli.get_services.each { |service|
+        putinfo "Refreshing %s..." % service['service']
+        ffcli.refresh_service(profile['id'], service['serviceid'], service['service'])
+      }
+    end
+  end
 }
