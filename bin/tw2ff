@@ -154,7 +154,7 @@ EOF
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed', name
-            subscribed_real << name
+            subscribed_real << name.downcase
           end
         }
       }
@@ -165,7 +165,7 @@ EOF
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed (imaginary)', name
-            subscribed_imag << name
+            subscribed_imag << name.downcase
           end
         }
       }
@@ -176,7 +176,7 @@ EOF
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed (group)', name
-            subscribed_imag << name
+            subscribed_imag << name.downcase
           end
         }
       }
@@ -196,7 +196,7 @@ EOF
       picture_urls = {}
 
       twitter_client().all_friends.each { |friend|
-        name = friend.screen_name
+        name = friend.screen_name.downcase
         friends << name
         next if subscribed.include?(name)
 
@@ -262,7 +262,7 @@ EOF
             user = reply.user
             next if user.protected
             name = user.screen_name
-            #next if friends.include?(name)
+            #next if friends.include?(name.downcase)
             text = '%s: %s' % [name, reply.text]
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
@@ -303,7 +303,7 @@ EOF
         user = reply.user
         next if !user.protected
         name = user.screen_name
-        next if friends.include?(name)
+        next if friends.include?(name.downcase)
 
         text = '[%s]: %s' % [name, reply.text]
         url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
@@ -315,7 +315,7 @@ EOF
         user = status.user
         next if !user.protected
         name = user.screen_name
-        next if friends_subscribed_real.include?(name)
+        next if friends_subscribed_real.include?(name.downcase)
         text = '[%s]: %s' % [name, status.text]
         url = 'http://twitter.com/%s/statuses/%d' % [name, status.id]
         timestamp = Time.parse(status.created_at)
