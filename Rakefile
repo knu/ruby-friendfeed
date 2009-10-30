@@ -18,7 +18,7 @@ manipulating friends, groups and services for your personal purposes.
     gem.rubyforge_project = "friendfeed"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
-
+  Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
 end
