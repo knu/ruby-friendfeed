@@ -258,7 +258,7 @@ EOF
 
           friends = Status('friends').to_set
 
-          twitter_client().replies.each { |reply|
+          twitter_client().mentions.each { |reply|
             user = reply.user
             next if user.protected
             name = user.screen_name
@@ -299,7 +299,7 @@ EOF
 
       items = []
 
-      twitter_client().replies.each { |reply|
+      twitter_client().mentions.each { |reply|
         user = reply.user
         next if !user.protected
         name = user.screen_name
