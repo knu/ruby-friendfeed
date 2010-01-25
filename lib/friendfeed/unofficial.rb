@@ -20,7 +20,7 @@ module FriendFeed
     # Unofficial API
     #
 
-    LOGIN_URI     = ROOT_URI + "/account/login"
+    LOGIN_URI     = ROOT_URI + "/account/login?v=2"
 
     private
 
