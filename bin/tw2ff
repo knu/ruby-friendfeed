@@ -216,7 +216,7 @@ EOF
         putinfo 'Skipping a protected user %s', name
       }
 
-      agent = WWW::Mechanize.new
+      agent = Mechanize.new
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary friend for %s', name

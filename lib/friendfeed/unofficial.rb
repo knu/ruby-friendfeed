@@ -36,7 +36,7 @@ module FriendFeed
     def login(nickname, password)
       @nickname = nickname
       @password = password
-      @login_agent = WWW::Mechanize.new
+      @login_agent = Mechanize.new
 
       page = @login_agent.get(LOGIN_URI)
 
@@ -81,7 +81,7 @@ module FriendFeed
           raise message
         if html_frag = json['html']
           html_body = '<html><body>' << html_frag << '</body></html>'
-          json['html_parser'] = WWW::Mechanize.html_parser.parse(html_body)
+          json['html_parser'] = Mechanize.html_parser.parse(html_body)
         end
         json
       end

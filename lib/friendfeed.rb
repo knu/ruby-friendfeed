@@ -30,7 +30,7 @@ module FriendFeed
     private
 
     def get_api_agent
-      @api_agent ||= WWW::Mechanize.new
+      @api_agent ||= Mechanize.new
     end
 
     def validate
@@ -46,7 +46,7 @@ module FriendFeed
 
       uri = API_URI + path
 
-      agent = WWW::Mechanize.new
+      agent = Mechanize.new
       agent.auth('username', @nickname)
       JSON.parse(agent.post(uri, { 'apikey' => @remote_key }).body)
     end
