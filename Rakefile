@@ -16,6 +16,8 @@ manipulating friends, groups and services for your personal purposes.
     gem.homepage = "http://github.com/knu/ruby-friendfeed"
     gem.authors = ["Akinori MUSHA"]
     gem.rubyforge_project = "friendfeed"
+    gem.add_dependency "json"
+    gem.add_dependency "mechanize", ">= 1.0.0"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
