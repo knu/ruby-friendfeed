@@ -30,6 +30,7 @@ manipulating friends, groups and services for your personal purposes.
      "Rakefile",
      "VERSION",
      "bin/tw2ff",
+     "friendfeed.gemspec",
      "lib/friendfeed.rb",
      "lib/friendfeed/compat.rb",
      "lib/friendfeed/unofficial.rb",
