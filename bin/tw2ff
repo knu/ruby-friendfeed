@@ -235,6 +235,73 @@ EOF
     end
   end
 
+  mode 'likes' do
+    description 'Synchronize Twitter favorites and FriendFeed likes as far as possible'
+
+    def run
+      require 'set'
+      require 'pp'
+
+      ffcli = friendfeed_client()
+      ff_me = ffcli.nickname
+
+      twcli = twitter_client()
+
+      favorited = Set[]
+
+      twcli.favorites.each { |favorite|
+        id = favorite['id']
+        # p [id, favorite.user.screen_name]
+        favorited << id
+      }
+
+      liked = Set[]
+      tw_url = {}
+
+      ffcli.get_user_liked_entries.each { |like|
+        url = like['link']
+        case TWITTER_URI.route_to(url).to_s
+        when %r{\A([A-Za-z0-9_]+)/statuses/([0-9]+)\z}
+          id = $2.to_i
+          liked << id
+          tw_url[id] = url
+        end
+      }
+
+      # Favorite FriendFeed-liked entry in Twitter
+      (liked - favorited).each { |id|
+        putinfo "Adding a favorite in Twitter: %s", tw_url[id]
+        twcli.favorite_create(id)
+      }
+
+      # Find Twitter-liked entries in FriendFeed that aren't liked yet
+      (
+        ffcli.get_user_friend_entries('num' => 1000) +
+        ffcli.get_user_discussed_entries
+      ).sort_by { |entry|
+        entry["published"]
+      }.each { |entry|
+        # Just in case this entry is not covered by the 'liked' list
+        next if entry['likes'].any? { |like| like['user']['nickname'] == ff_me }
+
+        # Is the source Twitter?
+        url = entry['service']['profileUrl'] or next
+        m = TWITTER_URI.route_to(url).to_s.match(%r{\A([A-Za-z0-9_]+)/statuses/([0-9]+)\z}) or next
+        id = m[2].to_i
+
+        # A different entry with the same source may be liked already
+        next if liked.include?(id)
+
+        if favorited.include?(id)
+          entryid = entry['id']
+          putinfo "Adding a like in FriendFeed: %s", entry['link']
+          ffcli.add_like(entryid)
+          liked << id
+        end
+      }
+    end
+  end
+
   mode 'replies' do
     description 'Produce an RSS feed for Twitter replies from non-friends'
 
