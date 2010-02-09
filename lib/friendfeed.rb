@@ -155,77 +155,79 @@ module FriendFeed
     end
 
     # Gets an array of the most recent public entries.
-    def get_public_entries()
-      call_api('feed/public')['entries']
+    def get_public_entries(options = nil)
+      call_api('feed/public', options)['entries']
     end
 
     # Gets an array of the entries the authenticated user would see on
     # their home page.
-    def get_home_entries()
+    def get_home_entries(options = nil)
       require_api_login
-      call_api('feed/home')['entries']
+      call_api('feed/home', options)['entries']
     end
 
     # Gets an array of the entries for the authenticated user's list
     # of a given +nickname+
-    def get_list_entries(nickname)
+    def get_list_entries(nickname, options = nil)
       require_api_login
-      call_api('feed/list/%s' % URI.encode(nickname))['entries']
+      call_api('feed/list/%s' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries from a user of a given
     # +nickname+ (defaulted to the authenticated user).
-    def get_user_entries(nickname = @nickname)
+    def get_user_entries(nickname = @nickname, options = nil)
       nickname or require_api_login
-      call_api('feed/user/%s' % URI.encode(nickname))['entries']
+      call_api('feed/user/%s' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries from users of given
     # +nicknames+.
-    def get_multi_user_entries(nicknames)
-      call_api('feed/user', 'nickname' => nicknames)['entries']
+    def get_multi_user_entries(nicknames, options = nil)
+      new_options = { 'nickname' => nicknames }
+      new_options.merge!(options) if options
+      call_api('feed/user', new_options)['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has commented
     # on.
-    def get_user_commented_entries(nickname = @nickname)
+    def get_user_commented_entries(nickname = @nickname, options = nil)
       nickname or require_api_login
-      call_api('feed/user/%s/comments' % URI.encode(nickname))['entries']
+      call_api('feed/user/%s/comments' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has like'd.
-    def get_user_liked_entries(nickname = @nickname)
+    def get_user_liked_entries(nickname = @nickname, options = nil)
       nickname or require_api_login
-      call_api('feed/user/%s/likes' % URI.encode(nickname))['entries']
+      call_api('feed/user/%s/likes' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has commented
     # on or like'd.
-    def get_user_discussed_entries(nickname = @nickname)
+    def get_user_discussed_entries(nickname = @nickname, options = nil)
       nickname or require_api_login
-      call_api('feed/user/%s/discussion' % URI.encode(nickname))['entries']
+      call_api('feed/user/%s/discussion' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries from friends of a user
     # of a given +nickname+ (defaulted to the authenticated user).
-    def get_user_friend_entries(nickname = @nickname)
+    def get_user_friend_entries(nickname = @nickname, options = nil)
       nickname or require_api_login
-      call_api('feed/user/%s/friends' % URI.encode(nickname))['entries']
+      call_api('feed/user/%s/friends' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries in a room of a given
     # +nickname+.
-    def get_room_entries(nickname)
-      call_api('feed/room/%s' % URI.encode(nickname))['entries']
+    def get_room_entries(nickname, options = nil)
+      call_api('feed/room/%s' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the entries the authenticated user would see on
     # their rooms page.
-    def get_rooms_entries()
-      call_api('feed/rooms')['entries']
+    def get_rooms_entries(options = nil)
+      call_api('feed/rooms', options)['entries']
     end
 
     # Gets an entry of a given +entryid+.  An exception is raised when
@@ -241,8 +243,10 @@ module FriendFeed
     end
 
     # Gets an array of entries that match a given +query+.
-    def search(query)
-      call_api('feed/search', 'q' => query)['entries']
+    def search(query, options = nil)
+      new_options = { 'q' => query }
+      new_options.merge!(options) if options
+      call_api('feed/search', 'q' => new_options)['entries']
     end
 
     # Gets an array of entries that link to a given +url+.
