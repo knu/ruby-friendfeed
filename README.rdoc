@@ -4,4 +4,4 @@ This is a Ruby library to provide access to FriendFeed API's.
 
 == Copyright
 
-Copyright (c) 2009 Akinori MUSHA.  See LICENSE for details.
+Copyright (c) 2009, 2010 Akinori MUSHA.  See LICENSE for details.
