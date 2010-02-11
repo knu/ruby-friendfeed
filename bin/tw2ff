@@ -89,10 +89,13 @@ end
 class Twitter::Base
   def all_friends
     list = []
-    (1..100).each { |i|
-      slice = friends(:page => i)
-      list.concat(slice)
-      break if slice.size < 100
+    cursor = -1
+    loop {
+      result = friends(:cursor => cursor)
+      break if result.users.nil?
+      list.concat(result.users)
+      cursor = result[:next_cursor]
+      break if cursor.zero?
     }
     list
   end
