@@ -55,10 +55,6 @@ EOM
   exit 1
 end
 
-def puterror(message)
-  STDERR.puts MYNAME + ': ' + e.to_s
-end
-
 def putinfo(fmt, *args)
   STDERR.puts sprintf(fmt, *args)
 end
@@ -73,6 +69,42 @@ def Status(key)
     $status.transaction(true) {
       return $status[key]
     }
+  end
+end
+
+def agent
+  $agent ||= Mechanize.new
+end
+
+def parse_uri(url)
+  case url
+  when URI
+    url
+  else
+    begin
+      URI.parse(url)
+    rescue URI::InvalidURIError
+      dir, file = File.split(url)
+      URI.parse(File.join(dir, URI.escape(file)))
+    end
+  end
+end
+
+def get_file(url)
+  uri = parse_uri(url)
+  putinfo 'Fetching %s', uri
+  agent.get_file(uri)
+end
+
+class FriendFeed::Client
+  def change_picture_to_url(id, url)
+    t = Tempfile.open("picture")
+    t.write get_file(url)
+    t.close
+    File.open(t.path) { |f|
+      change_picture(id, f)
+    }
+    t.unlink
   end
 end
 
@@ -98,6 +130,10 @@ class Twitter::Base
       break if cursor.zero?
     }
     list
+  end
+
+  def get_profile(name)
+    friends(:screen_name => name).first
   end
 end
 
@@ -219,21 +255,54 @@ EOF
         putinfo 'Skipping a protected user %s', name
       }
 
-      agent = Mechanize.new
-
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary friend for %s', name
         id = ffcli.create_imaginary_friend('(%s)' % name)
         ffcli.add_twitter(id, name)
-        if picture_urls.key?(name)
+        if url = picture_urls[name]
           putinfo 'Setting the picture of %s', name
-          t = Tempfile.open("picture")
-          t.write agent.get_file(picture_urls[name])
-          t.close
-          File.open(t.path) { |f|
-            ffcli.change_picture(id, f)
-          }
+          ffcli.change_picture_to_url(id, url)
         end
+      }
+    end
+  end
+
+  mode 'icons' do
+    description 'Update imaginary friends icons with those of their Twitter accounts'
+
+    def run
+      twcli = twitter_client()
+
+      picture_urls = {}
+
+      twcli.all_friends.each { |friend|
+        name = friend.screen_name.downcase
+        picture_urls[name] = friend.profile_image_url
+      }
+
+      ffcli = friendfeed_client()
+
+      putinfo "Checking imaginary friends in FriendFeed..."
+      ffcli.get_imaginary_friends.each { |profile|
+        profile['services'].each { |service|
+          url = service['profileUrl'] or next
+          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
+            name.downcase!
+            if picture_urls.key?(name)
+              url = picture_urls[name]
+            else
+              friend = twcli.get_profile(name) rescue
+                begin
+                  putinfo "Failed to get profile of %s", name
+                  next
+                end
+              url = friend.profile_image_url
+            end
+            id = profile['id']
+            putinfo 'Changing the picture of %s', name
+            ffcli.change_picture_to_url(id, url)
+          end
+        }
       }
     end
   end
