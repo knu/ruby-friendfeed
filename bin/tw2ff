@@ -176,8 +176,8 @@ EOF
     end
   end
   
-  mode 'sync' do
-    description 'Add imaginary friends for Twitter-only friends'
+  mode 'friends' do
+    description 'Import Twitter-only friends to FriendFeed as "imaginary friends"'
 
     def run
       require 'set'
@@ -307,7 +307,7 @@ EOF
     end
   end
 
-  mode 'likes' do
+  mode 'favorites' do
     description 'Synchronize Twitter favorites and FriendFeed likes as far as possible'
 
     def run
@@ -375,10 +375,10 @@ EOF
   end
 
   mode 'replies' do
-    description 'Produce an RSS feed for Twitter replies from non-friends'
+    description 'Produce an RSS feed of Twitter @replies'
 
     argument('filename') {
-      description 'Specifies a flie to write RSS to'
+      description 'Output RSS to this file'
     }
 
     def run
@@ -422,7 +422,7 @@ EOF
     description 'Produce an RSS feed for Twitter entries from protected friends'
 
     argument('filename') {
-      description 'Specifies a flie to write RSS to'
+      description 'Output RSS to this file'
     }
 
     def run
@@ -484,7 +484,7 @@ EOF
   end
   
   mode 'refresh' do
-    description 'Refresh the user services'
+    description 'Urge FriendFeed to refresh services (import feed entries)'
 
     def run
       ffcli = friendfeed_client()
