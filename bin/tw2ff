@@ -329,7 +329,7 @@ EOF
       liked = Set[]
       tw_url = {}
 
-      ffcli.get_user_liked_entries.each { |like|
+      ffcli.get_user_liked_entries(nil, 'service' => 'twitter').each { |like|
         url = like['link']
         case TWITTER_URI.route_to(url).to_s
         when %r{\A([A-Za-z0-9_]+)/statuses/([0-9]+)\z}
@@ -347,8 +347,9 @@ EOF
 
       # Find Twitter-liked entries in FriendFeed that aren't liked yet
       (
-        ffcli.get_user_friend_entries(nil, 'num' => 1000) +
-        ffcli.get_user_discussed_entries
+        ffcli.get_user_friend_entries(nil, 'service' => 'twitter') +
+        ffcli.get_user_discussed_entries(nil, 'service' => 'twitter')
+        # Currently imaginary friends entries are not checked
       ).sort_by { |entry|
         entry["published"]
       }.each { |entry|
