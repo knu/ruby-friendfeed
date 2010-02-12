@@ -81,8 +81,11 @@ module FriendFeed
       uri = API_URI + path
       if get_parameters
         uri.query = get_parameters.map { |key, value|
+          key = key.to_s
           if array = Array.try_convert(value)
             value = array.join(',')
+          else
+            value = value.to_s
           end
           URI.encode(key) + "=" + URI.encode(value)
         }.join('&')
