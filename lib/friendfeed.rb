@@ -106,7 +106,8 @@ module FriendFeed
 
     # Gets profile information of a user of a given +nickname+,
     # defaulted to the authenticated user, in hash.
-    def get_profile(nickname = @nickname)
+    def get_profile(nickname = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('user/%s/profile' % URI.encode(nickname))
     end
@@ -127,7 +128,8 @@ module FriendFeed
     # Gets an array of profile information of friends of a user of a
     # given +nickname+ (defaulted to the authenticated user) is
     # subscribing to.
-    def get_real_friends(nickname = @nickname)
+    def get_real_friends(nickname = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       nicknames = []
       get_profile(@nickname)['subscriptions'].each { |subscription|
@@ -178,7 +180,8 @@ module FriendFeed
 
     # Gets an array of the most recent entries from a user of a given
     # +nickname+ (defaulted to the authenticated user).
-    def get_user_entries(nickname = @nickname, options = nil)
+    def get_user_entries(nickname = nil, options = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('feed/user/%s' % URI.encode(nickname), options)['entries']
     end
@@ -194,14 +197,16 @@ module FriendFeed
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has commented
     # on.
-    def get_user_commented_entries(nickname = @nickname, options = nil)
+    def get_user_commented_entries(nickname = nil, options = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('feed/user/%s/comments' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has like'd.
-    def get_user_liked_entries(nickname = @nickname, options = nil)
+    def get_user_liked_entries(nickname = nil, options = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('feed/user/%s/likes' % URI.encode(nickname), options)['entries']
     end
@@ -209,14 +214,16 @@ module FriendFeed
     # Gets an array of the most recent entries a user of a given
     # +nickname+ (defaulted to the authenticated user) has commented
     # on or like'd.
-    def get_user_discussed_entries(nickname = @nickname, options = nil)
+    def get_user_discussed_entries(nickname = nil, options = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('feed/user/%s/discussion' % URI.encode(nickname), options)['entries']
     end
 
     # Gets an array of the most recent entries from friends of a user
     # of a given +nickname+ (defaulted to the authenticated user).
-    def get_user_friend_entries(nickname = @nickname, options = nil)
+    def get_user_friend_entries(nickname = nil, options = nil)
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('feed/user/%s/friends' % URI.encode(nickname), options)['entries']
     end
@@ -435,7 +442,8 @@ module FriendFeed
     # Gets a picture of a user of a given +nickname+ (defaulted to the
     # authenticated user) in blob.  Size can be 'small' (default),
     # 'medium' or 'large',
-    def get_picture(nickname = @nickname, size = 'small')
+    def get_picture(nickname = nil, size = 'small')
+      nickname ||= @nickname
       nickname or require_api_login
       call_api('/%s/picture' % URI.escape(nickname), { 'size' => size }, nil, true)
     end
