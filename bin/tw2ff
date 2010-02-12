@@ -347,7 +347,7 @@ EOF
 
       # Find Twitter-liked entries in FriendFeed that aren't liked yet
       (
-        ffcli.get_user_friend_entries('num' => 1000) +
+        ffcli.get_user_friend_entries(nil, 'num' => 1000) +
         ffcli.get_user_discussed_entries
       ).sort_by { |entry|
         entry["published"]
