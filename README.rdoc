@@ -2,6 +2,14 @@
 
 This is a Ruby library to provide access to FriendFeed API's.
 
+== tw2ff
+
+A tool to help your FriendFeed life much easier in terms of
+integration with Twitter.
+
+Run "tw2ff help" to get the list of subcommands, and "tw2ff
+<subcommand> --help" for the usage of each subcommands.
+
 == Copyright
 
 Copyright (c) 2009, 2010 Akinori MUSHA.  See LICENSE for details.
