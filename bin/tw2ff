@@ -312,7 +312,6 @@ EOF
 
     def run
       require 'set'
-      require 'pp'
 
       ffcli = friendfeed_client()
       ff_me = ffcli.nickname
@@ -377,6 +376,20 @@ EOF
   mode 'replies' do
     description 'Produce an RSS feed of Twitter @replies'
 
+    option('include-friends') {
+      description 'Include @reples from friends'
+
+      cast :bool
+      default false
+    }
+
+    option('include-protected') {
+      description 'Include @reples from protected users'
+
+      cast :bool
+      default false
+    }
+
     argument('filename') {
       description 'Output RSS to this file'
     }
@@ -387,21 +400,23 @@ EOF
       require 'set'
       require 'time'
 
+      include_friends   = params['include-friends'].value
+      include_protected = params['include-protected'].value
       filename = params['filename'].value
 
       File.open(filename, 'w') { |w|
         feed = RSS::Maker.make("2.0") { |rss|
-          rss.channel.title = 'Twitter replies from non-friends'
+          rss.channel.title = 'Twitter replies'
           rss.channel.link = 'http://twitter.com/replies'
-          rss.channel.description = 'Twitter replies from non-friends'
+          rss.channel.description = 'Twitter replies'
 
           friends = Status('friends').to_set
 
           twitter_client().mentions.each { |reply|
             user = reply.user
-            next if user.protected
+            next if !include_protected && user.protected
             name = user.screen_name
-            #next if friends.include?(name.downcase)
+            next if !include_friends && friends.include?(name.downcase)
             text = '%s: %s' % [name, reply.text]
             url = 'http://twitter.com/%s/statuses/%d' % [name, reply.id]
             timestamp = Time.parse(reply.created_at)
