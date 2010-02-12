@@ -89,7 +89,8 @@ module FriendFeed
 
     # Gets a list of services of a user or a room of a given
     # +nickname+, defaulted to the authenticated user.
-    def get_services(nickname = @nickname)
+    def get_services(nickname = nil)
+      nickname ||= @nickname
       agent = get_login_agent()
 
       services_uri = ROOT_URI + ("/%s/services" % URI.encode(nickname))
