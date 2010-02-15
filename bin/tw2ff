@@ -246,7 +246,8 @@ EOF
           picture_urls[name] = friend.profile_image_url
         end
       }
-      friends << Config('twitter.username')
+      twitter_me = Config('twitter.username')
+      friends << twitter_me
 
       Status('friends') { friends.sort }
       Status('friends_to_watch') { to_watch.sort }
@@ -264,6 +265,13 @@ EOF
           ffcli.change_picture_to_url(id, url)
         end
       }
+
+      printf <<-EOS, 'http://friendfeed.com/friends/twitter?username=' + URI.escape(twitter_me)
+
+You may also want to check out the following page
+to see if someone is joining FriendFeed:
+	%s
+      EOS
     end
   end
 
