@@ -342,7 +342,11 @@ EOF
       # Favorite FriendFeed-liked entry in Twitter
       (liked - favorited).each { |id|
         putinfo "Adding a favorite in Twitter: %s", tw_url[id]
-        twcli.favorite_create(id)
+        begin
+          twcli.favorite_create(id)
+        rescue
+          # Maybe already favorited a long ago
+        end
       }
 
       # Find Twitter-liked entries in FriendFeed that aren't liked yet
