@@ -8,11 +8,10 @@
 # terms as Ruby.
 #
 
-require 'friendfeed'
-require 'rubygems'
 require 'json'
 require 'mechanize'
 require 'uri'
+require 'friendfeed/v1'
 
 module FriendFeed
   class Client
@@ -20,7 +19,8 @@ module FriendFeed
     # Unofficial API
     #
 
-    LOGIN_URI     = ROOT_URI + "/account/login?v=2"
+    ROOT_URI  = URI.parse("https://friendfeed.com/")
+    LOGIN_URI = ROOT_URI + "/account/login?v=2"
 
     private
 
