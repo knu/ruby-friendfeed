@@ -1,8 +1,8 @@
-#!/usr/bin/env ruby
+# -*- mode: ruby -*-
 #--
 # friendfeed/unofficial.rb - provides access to FriendFeed unofficial API's
 #++
-# Copyright (c) 2009 Akinori MUSHA <knu@iDaemons.org>
+# Copyright (c) 2009, 2010 Akinori MUSHA <knu@iDaemons.org>
 #
 # All rights reserved.  You can redistribute and/or modify it under the same
 # terms as Ruby.

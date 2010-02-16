@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+# -*- mode: ruby -*-
 #--
 # friendfeed.rb - provides access to FriendFeed API's
 #++
