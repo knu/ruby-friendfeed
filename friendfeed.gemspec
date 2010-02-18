@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{friendfeed}
-  s.version = "0.1.12"
+  s.version = "0.1.13"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Akinori MUSHA"]
-  s.date = %q{2010-02-12}
+  s.date = %q{2010-02-18}
   s.default_executable = %q{tw2ff}
   s.description = %q{This is a Ruby library to provide access to FriendFeed API's.
 
@@ -34,6 +34,7 @@ manipulating friends, groups and services for your personal purposes.
      "lib/friendfeed.rb",
      "lib/friendfeed/compat.rb",
      "lib/friendfeed/unofficial.rb",
+     "lib/friendfeed/v1.rb",
      "test/friendfeed_test.rb",
      "test/test_helper.rb"
   ]
