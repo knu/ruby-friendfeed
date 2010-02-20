@@ -15,12 +15,12 @@ require 'uri'
 module FriendFeed
   module V2
     class Object < OpenStruct
-      def initialize(hash)
+      def initialize(hash, client = nil)
         klass = self.class
         new_hash = {}
         booleans = []
         hash.each_pair { |key, value|
-          key, value = klass.normalize_token(key), klass.convert_value(value)
+          key, value = klass.normalize_token(key), convert_value(value)
           new_hash[key] = value
           case value
           when true, false
@@ -29,12 +29,13 @@ module FriendFeed
         }
         super(new_hash)
         parse_as_boolean(*booleans)
+        @client = client
       end
 
-      def self.convert_value(object)
+      def convert_value(object)
         case object
         when Hash
-          new(object)
+          self.class.new(object, @client)
         when Array
           object.map { |element|
             convert_value(element)
