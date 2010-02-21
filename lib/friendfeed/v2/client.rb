@@ -67,6 +67,11 @@ module FriendFeed
         end
       end
 
+      # Validates authentication credentials.
+      def validate(options = nil)
+        Object::Feed.create call_api(compose_uri('validate', options)), self
+      end
+
       # Gets feed identified by a given +id+,
       # defaulted to the authenticated user, in hash.
       def get_feed(id = nil, options = nil)
