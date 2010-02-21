@@ -13,20 +13,29 @@ require 'mechanize'
 module FriendFeed
   module V2
     class NoAuth
-      def initialize(base_uri)
-        @base_uri = base_uri
+      def initialize()
         @mechanize = Mechanize.new
       end
 
+      attr_accessor :base_uri
+
       def get(uri, headers = nil)
-        parse_response(@mechanize.get(:url => @base_uri + uri, :headers => headers))
+        parse_response(@mechanize.get(:url => abs_uri(uri), :headers => headers))
       end
 
       def post(uri, body = nil, headers = nil)
-        parse_response(@mechanize.post(@base_uri + uri, body, headers || {}))
+        parse_response(@mechanize.post(abs_uri(uri), body, headers || {}))
       end
 
       private
+
+      def abs_uri(uri)
+        if @base_uri
+          @base_uri + uri
+        else
+          uri
+        end
+      end
 
       def parse_response(response)
         if !response.respond_to?(:[])

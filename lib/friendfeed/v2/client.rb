@@ -33,12 +33,14 @@ module FriendFeed
         if auth
           login(auth)
         else
-          @auth = NoAuth.new(API_URI)
+          @auth = NoAuth.new
+          @auth.base_uri = API_URI
         end
       end
 
       def login(auth)
         @auth = auth
+        @auth.base_uri = API_URI
         validate
       end
 
