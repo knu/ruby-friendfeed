@@ -74,15 +74,21 @@ module FriendFeed
         when Hash
           options = id if options.nil?
         end
-        Object::Feed.create call_api(compose_uri('feed/%s' % id, options))
+        Object::Feed.create call_api(compose_uri('feed/%s' % id, options)), self
+      end
+
+      # Gets feed identified by a given +id+,
+      # defaulted to the authenticated user, in hash.
+      def get_entry(id, options = nil)
+        Object::Entry.create call_api(compose_uri('entry/%s' % id, options)), self
       end
 
       def decode_short(short_id, options = nil)
-        Object::Entry.create call_api(compose_uri('short/%s' % short_id, options))
+        Object::Entry.create call_api(compose_uri('short/%s' % short_id, options)), self
       end
 
       def encode_short(entry_id, options = nil)
-        Object::Entry.create call_api('short', merge_hashes({ :entry => entry_id }, options))
+        Object::Entry.create call_api('short', merge_hashes({ :entry => entry_id }, options)), self
       end
 
       private

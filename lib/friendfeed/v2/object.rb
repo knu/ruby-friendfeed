@@ -32,6 +32,8 @@ module FriendFeed
         @client = client
       end
 
+      attr_reader :client
+
       def id
         @table[__method__]
       end
@@ -141,8 +143,8 @@ module FriendFeed
 
       module DataType
         def self.included(mod)
-          def mod.create(hash)
-            Object.new(hash).extend(self).tap { |object|
+          def mod.create(hash, client = nil)
+            Object.new(hash, client).extend(self).tap { |object|
               object.data_type = self
             }
           end
