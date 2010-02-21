@@ -118,5 +118,7 @@ module FriendFeed
         uri
       end
     end
+
+    autoload :HTTPAuth, 'friendfeed/v2/httpauth'
   end
 end
