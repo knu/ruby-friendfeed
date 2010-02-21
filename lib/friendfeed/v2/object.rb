@@ -32,6 +32,10 @@ module FriendFeed
         @client = client
       end
 
+      def id
+        @table[__method__]
+      end
+
       def convert_value(object)
         case object
         when Hash
