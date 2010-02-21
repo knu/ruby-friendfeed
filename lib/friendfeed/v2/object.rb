@@ -59,6 +59,21 @@ module FriendFeed
         new_token.to_sym
       end
 
+      def lazy_get(*keys, &getter)
+        def_method, rm_method = class << self
+                                  [method(:define_method), method(:remove_method)]
+                                end
+        keys.each { |key|
+          def_method[key,
+            proc {
+              rm_method[key]
+              getter.call(self)
+              send(key)
+            }] unless respond_to?(key)
+        }
+        self
+      end
+
       attr_accessor :data_type
 
       def data_type_name
@@ -188,6 +203,15 @@ module FriendFeed
           object.parse_as(Via, :via)
           object.parse_as(FoF, :fof)
           object.parse_as_boolean(:created, :updated)
+
+          object.lazy_get(:short_id, :short_url) { |obj|
+            if client = obj.client
+              entry = client.encode_short(obj.id)
+              [:short_id, :short_url].each { |key|
+                obj.send("#{key}=", entry.send(key))
+              }
+            end
+          }
         end
       end
 
