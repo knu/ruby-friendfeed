@@ -61,7 +61,7 @@ module FriendFeed
             end
           end
           uri = uri.dup
-          uri.query = resource_access_query(method, uri, @access_token, parameters)
+          uri.query = resource_access_query(method, uri, parameters)
         end
         return [method, uri, body, headers]
       end
@@ -84,16 +84,16 @@ module FriendFeed
         return uri
       end
 
-      def resource_access_query(method, uri, access_token, parameters = {})
+      def resource_access_query(method, uri, parameters = {})
         parameters = {
           'oauth_consumer_key' => @consumer_token.key,
-          'oauth_token' => access_token.key,
+          'oauth_token' => @access_token.key,
           'oauth_signature_method' => 'HMAC-SHA1',
           'oauth_timestamp' => Time.new.to_i.to_s,
           'oauth_nonce' => SecureRandom.uuid,
           'oauth_version' => '1.0',
         }.update(parameters)
-        parameters['oauth_signature'] = oauth_signature(method, uri, parameters, access_token)
+        parameters['oauth_signature'] = oauth_signature(method, uri, parameters, @access_token)
         return oauth_escape_parameters(parameters)
       end
 
