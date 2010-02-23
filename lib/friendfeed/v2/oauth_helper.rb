@@ -35,6 +35,16 @@ module FriendFeed
         @access_token = oauth_parse_response(ia_access_token_uri(username, password).read)
       end
 
+=begin
+      def get_request_token()
+        @request_token = oauth_parse_response(request_token_uri().read)
+      end
+
+      def get_access_token(request_token)
+        @access_token = oauth_parse_response(access_token_uri().read)
+      end
+=end
+
       # Returns the access token as +OAuthToken+.
       attr_reader :access_token
 
@@ -83,6 +93,50 @@ module FriendFeed
         uri.query = oauth_escape_parameters(parameters)
         return uri
       end
+
+=begin
+      def request_token_uri()
+        uri = OAUTH_BASE_URI + 'request_token'
+        # http://oauth.net/core/1.0a/#rfc.section.6.1
+        # http://oauth.net/core/1.0a/#rfc.section.6.1.1
+        parameters = {
+          'oauth_consumer_key' => @consumer_token.key,
+          'oauth_signature_method' => 'HMAC-SHA1',
+          'oauth_timestamp' => Time.new.to_i.to_s,
+          'oauth_nonce' => SecureRandom.uuid,
+          'oauth_version' => '1.0',
+        }
+        parameters['oauth_signature'] = oauth_signature('GET', uri, parameters)
+        uri.query = oauth_escape_parameters(parameters)
+        return uri
+      end
+
+      def authorization_uri()
+        uri = OAUTH_BASE_URI + 'authorize'
+        # http://oauth.net/core/1.0a/#rfc.section.6.2
+        # http://oauth.net/core/1.0a/#rfc.section.6.2.1
+        uri.query = oauth_escape_parameters('oauth_token' => @request_token.key)
+        return uri
+      end
+
+      def access_token_uri()
+        uri = OAUTH_BASE_URI + 'access_token'
+        # http://oauth.net/core/1.0/#rfc.section.6.3
+        # http://oauth.net/core/1.0/#rfc.section.6.3.1
+        parameters = {
+          'oauth_consumer_key' => @consumer_token.key,
+          'oauth_token' => @request_token.key,
+          'oauth_signature_method' => 'HMAC-SHA1',
+          'oauth_timestamp' => Time.new.to_i.to_s,
+          'oauth_nonce' => SecureRandom.uuid,
+          'oauth_version' => '1.0',
+          # oauth_verifier is missing from this API.
+        }
+        parameters['oauth_signature'] = oauth_signature('GET', uri, parameters)
+        uri.query = oauth_escape_parameters(parameters)
+        return uri
+      end
+=end
 
       def resource_access_query(method, uri, parameters = {})
         parameters = {
