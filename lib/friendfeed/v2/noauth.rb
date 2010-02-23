@@ -12,6 +12,7 @@ require 'mechanize'
 
 module FriendFeed
   module V2
+    # Represents a non-authenticated HTTP client
     class NoAuth
       def initialize(options = nil)
         @mechanize = Mechanize.new
@@ -19,10 +20,12 @@ module FriendFeed
 
       attr_accessor :base_uri
 
+      # Performs a GET request.
       def get(uri, headers = nil)
         parse_response(@mechanize.get(:url => abs_uri(uri), :headers => headers))
       end
 
+      # Performs a POST request.
       def post(uri, body = nil, headers = nil)
         parse_response(@mechanize.post(abs_uri(uri), body, headers || {}))
       end

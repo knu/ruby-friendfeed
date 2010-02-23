@@ -8,12 +8,16 @@
 # terms as Ruby.
 #
 
-require 'mechanize'
 require 'friendfeed/v2/noauth'
 
 module FriendFeed
   module V2
+    # Represents a basic-authenticated HTTP client.
     class HTTPAuth < NoAuth
+      # Creates a basic-authenticated HTTP client, with given
+      # +username+ and +password+.  Note that +password+ must be the
+      # user's remote key if this client is used for the official
+      # FriendFeed API.
       def initialize(username, password, options = nil)
         super(options)
         @mechanize.auth(username, password)
