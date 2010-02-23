@@ -19,8 +19,6 @@ module FriendFeed
   module V2
     # Client library for FriendFeed V2 API.
     class Client
-      attr_reader :nickname
-
       #
       # Official API
       #
@@ -72,28 +70,23 @@ module FriendFeed
         Object::Feed.create call_api(compose_uri('validate', options)), self
       end
 
-      # Gets feed identified by a given +id+,
-      # defaulted to the authenticated user, in hash.
-      def get_feed(id = nil, options = nil)
-        case id
-        when nil
-          id = @nickname
-        when Hash
-          options = id if options.nil?
-        end
+      # Gets a feed identified by a given +id+.
+      def get_feed(id, options = nil)
         Object::Feed.create call_api(compose_uri('feed/%s' % id, options)), self
       end
 
-      # Gets feed identified by a given +id+,
-      # defaulted to the authenticated user, in hash.
+      # Gets an entry identified by a given +id+.
       def get_entry(id, options = nil)
         Object::Entry.create call_api(compose_uri('entry/%s' % id, options)), self
       end
 
+      # Gets an entry that an ff.im +short_id+ points to.
       def decode_short(short_id, options = nil)
         Object::Entry.create call_api(compose_uri('short/%s' % short_id, options)), self
       end
 
+      # Gets an entry identified by a given +entry_id+.  The resulted
+      # entry has short_id and short_url in it.
       def encode_short(entry_id, options = nil)
         Object::Entry.create call_api('short', merge_hashes({ :entry => entry_id }, options)), self
       end
