@@ -118,5 +118,6 @@ module FriendFeed
     end
 
     autoload :HTTPAuth, 'friendfeed/v2/httpauth'
+    autoload :IAAuth, 'friendfeed/v2/iaauth'
   end
 end

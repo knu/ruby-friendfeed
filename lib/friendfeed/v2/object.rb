@@ -68,7 +68,7 @@ module FriendFeed
             proc {
               rm_method[key]
               getter.call(self)
-              send(key)
+              __send__(key)
             }] unless respond_to?(key)
         }
         self
@@ -208,7 +208,7 @@ module FriendFeed
             if client = obj.client
               entry = client.encode_short(obj.id)
               [:short_id, :short_url].each { |key|
-                obj.send("#{key}=", entry.send(key))
+                obj.__send__("#{key}=", entry.__send__(key))
               }
             end
           }
