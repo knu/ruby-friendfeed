@@ -14,8 +14,8 @@ require 'friendfeed/v2/noauth'
 module FriendFeed
   module V2
     class HTTPAuth < NoAuth
-      def initialize(username, password)
-        super()
+      def initialize(username, password, options = nil)
+        super(options)
         @mechanize.auth(username, password)
         @username = username
         @password = password

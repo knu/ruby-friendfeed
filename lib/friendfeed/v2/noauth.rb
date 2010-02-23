@@ -13,7 +13,7 @@ require 'mechanize'
 module FriendFeed
   module V2
     class NoAuth
-      def initialize()
+      def initialize(options = nil)
         @mechanize = Mechanize.new
       end
 
