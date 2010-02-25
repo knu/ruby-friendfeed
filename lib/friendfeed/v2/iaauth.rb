@@ -39,6 +39,16 @@ module FriendFeed
         @helper.get_ia_access_token(username, password)
       end
 
+      # Gets the access token.
+      def access_token
+        @helper.access_token
+      end
+
+      # Sets the access token.
+      def access_token=(access_token)
+        @helper.access_token = access_token
+      end
+
       # Performs a GET request.
       def get(uri, headers = nil)
         method, uri, body, headers = @helper.signed_request('GET', abs_uri(uri), nil, headers)
