@@ -13,7 +13,24 @@ require 'friendfeed/v2/oauth_helper'
 
 module FriendFeed
   module V2
-    # Represents an Installed Application Auth client
+    # Represents an Installed Application Auth client.
+    #
+    # Example usage:
+    #   iaauth = FriendFeed::V2::IAAuth.new([ia_key, ia_secret])
+    #
+    #   if first_access # First time
+    #     # Require user for username and password
+    #     username, password = prompt_login_credentials()
+    #     user_key, user_secret = iaauth.get_ia_access_token(username, password)
+    #     # Store the user_key and user_token for future use
+    #     store_user_token([user_key, user_secrect])
+    #   else            # From second time and on
+    #     # Extract previously stored user_key and user_token
+    #     user_key, user_secret = extract_user_token()
+    #     iaauth.access_token([user_key, user_secret])
+    #   end
+    #   client = FriendFeed::V2::Client(iaauth)
+    #   # ... Enjoy! ...
     class IAAuth < NoAuth
       # Creates an authentication client for an installed application
       # with +consumer_token+ and optional +access_token+, which can
