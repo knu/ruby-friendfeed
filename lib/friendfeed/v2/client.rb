@@ -57,11 +57,18 @@ module FriendFeed
           response = @auth.get(path)
         end
 
-        case response['Content-Type']
+        type, *extensions = response['Content-Type'].split(/;\s*/)
+        parameters = {}
+        extensions.each { |extension|
+          key, value = extension.split('=')
+          parameters[key] = value
+        }
+
+        case type
         when 'text/javascript'
-          response.body
-        else
           JSON.parse(response.body)
+        else
+          response.body
         end
       end
 
