@@ -77,14 +77,16 @@ module FriendFeed
         Object::Feed.create call_api(compose_uri('validate', options)), self
       end
 
-      # Gets a feed identified by a given +id+.
+      # Gets a feed identified by a given +id+.  The +id+ can be an
+      # array such as [username, :friends] or [:list, list_id,
+      # :summary, n], which elements are joined with slash.
       def get_feed(id, options = nil)
-        Object::Feed.create call_api(compose_uri('feed/%s' % id, options)), self
+        Object::Feed.create call_api(compose_uri('feed/%s' % join(id, '/'), options)), self
       end
 
       # Gets an entry identified by a given +id+.
       def get_entry(id, options = nil)
-        Object::Entry.create call_api(compose_uri('entry/%s' % id, options)), self
+        Object::Entry.create call_api(compose_uri('entry/%s' % join(id, '/'), options)), self
       end
 
       # Gets an entry that an ff.im +short_id+ points to.
@@ -98,7 +100,27 @@ module FriendFeed
         Object::Entry.create call_api('short', merge_hashes({ :entry => entry_id }, options)), self
       end
 
+      # Gets the feed lists in the side bar of the authenticated user.
+      def get_feedlist(id, options = nil)
+       Object::FeedList.create call_api('feedlist'), self
+      end
+
+      # Gets the information about a feed specified by a given +id+.
+      def get_feedinfo(id, options = nil)
+       Object::Feed.create call_api('feedinfo/%s' % id), self
+      end
+
       private
+
+      # If an array-like is given, join with delimiter.  Convert to
+      # string otherwise.
+      def join(object, delimiter = ',')
+        if array = Array.try_convert(object)
+          array.join(delimiter)
+        else
+          object.to_s
+        end
+      end
 
       def merge_hashes(*hashes)
         hashes.inject({}) { |i, j|
@@ -112,11 +134,7 @@ module FriendFeed
         if parameters
           uri.query = parameters.map { |key, value|
             key = key.to_s
-            if array = Array.try_convert(value)
-              value = array.join(',')
-            else
-              value = value.to_s
-            end
+            value = join(value)
             URI.encode(key) + "=" + URI.encode(value)
           }.join('&')
         end
