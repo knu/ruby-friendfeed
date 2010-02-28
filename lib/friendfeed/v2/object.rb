@@ -184,15 +184,16 @@ module FriendFeed
 
       # Represents an entry object.  The following fields are defined:
       #
-      #     url, date, body, from, to, comments, likes, thumbnails, files,
-      #     via, geo, commands; short_id, short_url; fof, fof_html; address_html;
-      #     created, updated
+      #     url, date, body, from, to, comments, likes, thumbnails,
+      #     files, via, geo, commands; short_id, short_url; hidden;
+      #     fof, fof_html; raw_body, raw_link; address_html; created,
+      #     updated
       module Entry
         include DataType
 
         def self.extended(object)
           object.data_type = self
-          object.parse_as_uri(:url, :short_url)
+          object.parse_as_uri(:url, :short_url, :raw_link)
           object.parse_as_time(:date)
           object.parse_as(Feed, :from)
           object.parse_as_array_of(Feed, :to)
@@ -202,7 +203,7 @@ module FriendFeed
           object.parse_as_array_of(File, :files)
           object.parse_as(Via, :via)
           object.parse_as(FoF, :fof)
-          object.parse_as_boolean(:created, :updated)
+          object.parse_as_boolean(:hidden, :created, :updated)
 
           object.lazy_get(:short_id, :short_url) { |obj|
             if client = obj.client
