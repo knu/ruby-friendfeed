@@ -159,9 +159,7 @@ module FriendFeed
       module DataType
         def self.included(mod)
           def mod.create(hash, client = nil)
-            Object.new(hash, client).extend(self).tap { |object|
-              object.data_type = self
-            }
+            Object.new(hash, client).extend(self)
           end
         end
       end
@@ -175,6 +173,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_enum(:type)
           object.parse_as_boolean(:private)
           object.parse_as_array_of(Entry, :entries)
@@ -192,6 +191,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_uri(:url, :short_url)
           object.parse_as_time(:date)
           object.parse_as(Feed, :from)
@@ -223,6 +223,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_time(:date)
           object.parse_as(Feed, :from)
           object.parse_as(Via, :via)
@@ -237,6 +238,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_uri(:url, :link)
         end
       end
@@ -248,6 +250,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_uri(:url, :icon)
         end
       end
@@ -259,8 +262,8 @@ module FriendFeed
       module Like
         include DataType
 
-
         def self.extended(object)
+          object.data_type = self
           object.parse_as_time(:date)
           object.parse_as(Feed, :from)
           object.parse_as_boolean(:created, :updated)
@@ -274,6 +277,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_uri(:url)
         end
       end
@@ -285,6 +289,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_enum(:type)
           object.parse_as(:Feed, :from)
         end
@@ -297,6 +302,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_enum(:id)
           object.parse_as_uri(:url, :icon, :profile)
         end
@@ -309,6 +315,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_array_of(Feed, :main, :lists, :groups, :searches)
           object.parse_as_array_of(Section, :sections)
         end
@@ -321,6 +328,7 @@ module FriendFeed
         include DataType
 
         def self.extended(object)
+          object.data_type = self
           object.parse_as_enum(:id)
           object.parse_as_array_of(Feed, :feeds)
         end
