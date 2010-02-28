@@ -16,6 +16,7 @@ module FriendFeed
   module V2
     class Object < OpenStruct
       def initialize(hash, client = nil)
+        @client = client
         klass = self.class
         new_hash = {}
         booleans = []
@@ -29,7 +30,6 @@ module FriendFeed
         }
         super(new_hash)
         parse_as_boolean(*booleans)
-        @client = client
       end
 
       attr_reader :client
