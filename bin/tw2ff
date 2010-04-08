@@ -181,8 +181,17 @@ EOF
   mode 'friends' do
     description 'Import Twitter-only friends to FriendFeed as "imaginary friends"'
 
+    option('name-format') {
+      description 'A printf format to generate an imaginary friend\'s name from a Twitter name'
+
+      argument_required
+      default '(%s)'
+    }
+
     def run
       require 'set'
+
+      name_format = params['name-format'].value
 
       ffcli = friendfeed_client()
 
@@ -260,7 +269,7 @@ EOF
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary friend for %s', name
-        friendfeed_client().follow_twitter_user(name, '(%s)' % name,
+        friendfeed_client().follow_twitter_user(name, name_format % name,
           picture_urls[name])
       }
 
