@@ -177,6 +177,51 @@ EOF
       system ENV['VISUAL'] || ENV['EDITOR'] || 'vi', ConfigFile()
     end
   end
+
+  mode 'follow' do
+    description 'Import a Twitter user to FriendFeed as an "imaginary friend"'
+
+    option('name-format') {
+      description 'A printf format to generate an imaginary friend\'s name from a Twitter name'
+
+      argument_required
+      default '(%s)'
+    }
+
+    argument('names') {
+      description 'List of Twitter user names to follow'
+      arity -1
+    }
+
+    def run
+      name_format = params['name-format'].value
+
+      names = params['names'].values
+
+      exit if names.empty?
+
+      names.each { |name|
+        twuser =
+          begin
+            twitter_client().user(name)
+          rescue Twitter::NotFound
+            putinfo 'Twitter user not found: %s', name
+            next
+          rescue => e
+            putinfo 'Twitter user not accessible: %s: %s', name, e
+            next
+          end
+
+        if !twuser.status
+          putinfo 'Twitter user may not be followable: %s', name
+        end
+
+        putinfo 'Creating an imaginary friend for %s', name
+        friendfeed_client().follow_twitter_user(name, name_format % name,
+          twuser.profile_image_url)
+      }
+    end
+  end
   
   mode 'friends' do
     description 'Import Twitter-only friends to FriendFeed as "imaginary friends"'
