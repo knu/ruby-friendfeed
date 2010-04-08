@@ -106,6 +106,12 @@ class FriendFeed::Client
     }
     t.unlink
   end
+
+  def follow_twitter_user(twitter_name, display_name, picture_url = nil)
+    id = create_imaginary_friend(display_name)
+    add_twitter(id, twitter_name)
+    change_picture_to_url(id, picture_url) if picture_url
+  end
 end
 
 def friendfeed_client
@@ -254,12 +260,8 @@ EOF
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary friend for %s', name
-        id = ffcli.create_imaginary_friend('(%s)' % name)
-        ffcli.add_twitter(id, name)
-        if url = picture_urls[name]
-          putinfo 'Setting the picture of %s', name
-          ffcli.change_picture_to_url(id, url)
-        end
+        friendfeed_client().follow_twitter_user(name, '(%s)' % name,
+          picture_urls[name])
       }
 
       printf <<-EOS, 'http://friendfeed.com/friends/twitter?username=' + URI.escape(twitter_me)
