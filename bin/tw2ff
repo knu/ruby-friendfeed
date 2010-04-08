@@ -131,10 +131,6 @@ class Twitter::Base
     }
     list
   end
-
-  def get_profile(name)
-    friends(:screen_name => name).first
-  end
 end
 
 def twitter_client
@@ -299,7 +295,7 @@ to see if someone is joining FriendFeed:
             if picture_urls.key?(name)
               url = picture_urls[name]
             else
-              friend = twcli.get_profile(name) rescue
+              friend = twcli.user(name) rescue
                 begin
                   putinfo "Failed to get profile of %s", name
                   next
