@@ -272,63 +272,6 @@ module FriendFeed
       add_service(id, 'twitter', params)
     end
 
-    # Edits a feed of the authenticated user, a group or an imaginary
-    # friend specified by a unique ID.  Specify 'isstatus' => 'on' to
-    # display entries as messages (no link), and 'importcomment' =>
-    # 'on' to include entry description as a comment. [unofficial]
-    def edit_feed(id, serviceid, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      edit_service(id, 'feed', params)
-    end
-
-    # Adds a blog feed to the authenticated user, a group or an
-    # imaginary friend specified by a unique ID.  Specify 'multiauth'
-    # => 'on' when the blog has multiple authors, and 'author' =>
-    # '(name)' to limit entries to those written by a specific
-    # author. [unofficial]
-    def edit_blog(id, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      edit_service(id, 'blog', options)
-    end
-
-    # Edits a Twitter service of the authenticated user, a group or an
-    # imaginary friend specified by a unique ID.  Specify 'isstatus'
-    # => 'on' to display entries as messages (no link), and
-    # 'importcomment' => 'on' to include entry description as a
-    # comment. [unofficial]
-    def edit_twitter(id, serviceid, twitter_name)
-      edit_service(id, serviceid, 'twitter', 'username' => twitter_name)
-    end
-
-    # Removes a feed from the authenticated user, a group or an
-    # imaginary friend specified by a unique ID.  Specify
-    # 'deleteentries' => 'on' to delete entries also. [unofficial]
-    def remove_feed(id, serviceid, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      remove_service(id, serviceid, 'feed', options = nil)
-    end
-
-    # Removes a blog feed from the authenticated user, a group or an
-    # imaginary friend specified by a unique ID.  Specify
-    # 'deleteentries' => 'on' to delete entries also. [unofficial]
-    def remove_blog(id, serviceid, url, options = nil)
-      params = { 'url' => url }
-      params.update(options) if options
-      remove_service(id, serviceid, 'blog', options = nil)
-    end
-
-    # Removes a Twitter service from the authenticated user, a group
-    # or an imaginary friend specified by a unique ID.  Specify
-    # 'deleteentries' => 'on' to delete entries also. [unofficial]
-    def remove_twitter(id, serviceid, twitter_name, options = nil)
-      params = { 'username' => twitter_name }
-      params.update(options) if options
-      remove_service(id, serviceid, 'twitter', options = nil)
-    end
-
     # Changes the picture of the authenticated user, a group or an
     # imaginary friend. [unofficial]
     def change_picture(id, io)
