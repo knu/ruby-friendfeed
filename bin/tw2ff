@@ -109,7 +109,7 @@ class FriendFeed::Client
 
   def follow_twitter_user(twitter_name, display_name, picture_url = nil)
     id = create_imaginary_friend(display_name)
-    add_twitter(id, twitter_name)
+    add_twitter(id, twitter_name, 'includeatreplies' => 'on')
     change_picture_to_url(id, picture_url) if picture_url
   end
 end
