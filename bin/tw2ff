@@ -367,6 +367,32 @@ to see if someone is joining FriendFeed:
     end
   end
 
+  mode 'includeatreplies' do
+    description 'Fix imaginary friends to include @replies'
+
+    def run
+      ffcli = friendfeed_client()
+
+      putinfo "Checking imaginary friends in FriendFeed..."
+      ffcli.get_imaginary_friends.each { |profile|
+        id = profile['id']
+        ffcli.get_services(id).each { |service|
+          url = service['profileUrl'] or next
+
+          if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
+            name.downcase!
+            putinfo 'Trying to include @replies by %s', name
+            begin
+              ffcli.edit_service(id, service['serviceid'], 'includeatreplies' => 'on')
+            rescue => e
+              putinfo 'Failed, maybe due to the Twitter account removal or a network problem.'
+            end
+          end
+        }
+      }
+    end
+  end
+
   mode 'favorites' do
     description 'Synchronize Twitter favorites and FriendFeed likes as far as possible'
 
