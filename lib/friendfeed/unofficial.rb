@@ -172,6 +172,32 @@ module FriendFeed
       post(EDIT_GROUP_URI, params)
     end
 
+    # Gets information of a service specified by a unique
+    # ID. [unofficial]
+    def get_service(id, serviceid)
+      parser = post(ROOT_URI + '/a/servicedialog',
+        'serviceid' => serviceid, 'stream' => id)['html_parser']
+      form = parser.at("//form[1]")
+      hash = { 'stream' => id }
+      form.xpath(".//input").each { |input|
+        case input['type'].downcase
+        when 'text', 'hidden'
+          hash[input['name']] = input['value']
+        when 'radio', 'checkbox'
+          if input['checked']
+            value = input['value'] || 'on'
+            if value && !value.empty?
+              hash[input['name']] = value
+            end
+          end
+        end
+      }
+      form.xpath(".//textarea").each { |input|
+        hash[input['name']] = input.text
+      }
+      hash
+    end
+
     # Adds a feed to the authenticated user, a group or an imaginary
     # friend specified by a unique ID.  Specify 'isstatus' => 'on' to
     # display entries as messages (no link), and 'importcomment' =>
@@ -187,12 +213,8 @@ module FriendFeed
 
     # Edits a service of the authenticated user, a group or an
     # imaginary friend specified by a unique ID. [unofficial]
-    def edit_service(id, serviceid, service, options = nil)
-      params = {
-        'stream' => id,
-        'service' => service,
-        'serviceid' => serviceid,
-      }
+    def edit_service(id, serviceid, options = nil)
+      params = get_service(id, serviceid)
       params.update(options) if options
       post(ROOT_URI + '/a/configureservice', params)
     end
