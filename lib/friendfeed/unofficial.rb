@@ -145,11 +145,11 @@ module FriendFeed
       hash = { 'stream' => id }
       form.xpath(".//input").each { |input|
         case input['type'].downcase
-        when 'text'
+        when 'text', 'hidden'
           hash[input['name']] = input['value']
         when 'radio', 'checkbox'
           if input['checked']
-            value = input['value']
+            value = input['value'] || 'on'
             if value && !value.empty?
               hash[input['name']] = value
             end
