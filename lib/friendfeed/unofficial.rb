@@ -244,8 +244,10 @@ module FriendFeed
 
     # Adds a Twitter service to the authenticated user, a group or an
     # imaginary friend specified by a unique ID. [unofficial]
-    def add_twitter(id, twitter_name)
-      add_service(id, 'twitter', 'username' => twitter_name)
+    def add_twitter(id, twitter_name, options = nil)
+      params = { 'username' => twitter_name }
+      params.update(options) if options
+      add_service(id, 'twitter', params)
     end
 
     # Edits a feed of the authenticated user, a group or an imaginary
