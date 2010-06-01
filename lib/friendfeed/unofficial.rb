@@ -166,10 +166,10 @@ module FriendFeed
     # Supported fields are 'nickname', 'name', 'description', 'access'
     # ('private', 'semipublic' or 'public'), and 'anyoneinvite' (none
     # or '1').  [unofficial]
-    def edit_group(id, hash)
-      param_hash = get_group(id)
-      param_hash.update(hash)
-      post(EDIT_GROUP_URI, param_hash)
+    def edit_group(id, options)
+      params = get_group(id)
+      params.update(options)
+      post(EDIT_GROUP_URI, params)
     end
 
     # Adds a feed to the authenticated user, a group or an imaginary
