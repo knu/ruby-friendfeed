@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# -*- mode: ruby -*-
+# -*- mode: ruby; coding: utf-8 -*-
 
 $KCODE = 'u'
 
@@ -465,7 +465,7 @@ to see if someone is joining FriendFeed:
   end
 
   mode 'replies' do
-    description 'Produce an RSS feed of Twitter @replies'
+    description 'Produce an RSS feed of Twitter @replies to you'
 
     option('include-friends') {
       description 'Include @reples from friends'
@@ -589,6 +589,48 @@ to see if someone is joining FriendFeed:
     end
   end
   
+  mode 'retweeted' do
+    description 'Produce an RSS feed of your Twitter posts retweeted by others'
+
+    argument('filename') {
+      description 'Output RSS to this file'
+    }
+
+    def run
+      require 'nokogiri'
+      require 'rss'
+      require 'set'
+      require 'time'
+
+      filename = params['filename'].value
+
+      File.open(filename, 'w') { |w|
+        feed = RSS::Maker.make("2.0") { |rss|
+          rss.channel.title = 'Twitter posts retweeted by others'
+          rss.channel.link = 'http://twitter.com/retweeted_of_mine'
+          rss.channel.description = 'Twitter posts retweeted by others'
+
+          twcli = twitter_client()
+
+          twcli.retweets_of_me.each { |tweet|
+            user = tweet.user
+            name = user.screen_name
+            text = tweet.text
+            url = 'http://twitter.com/%s/statuses/%d' % [name, tweet.id]
+            timestamp = Time.parse(tweet.created_at)
+            rss.items.new_item { |item|
+              item.title = Nokogiri.HTML(text).inner_text
+              item.link = url
+              item.description = text
+              item.date = timestamp
+            }
+          }
+        }
+        w.print feed.to_s
+      }
+    end
+  end
+
   mode 'refresh' do
     description 'Urge FriendFeed to refresh services (import feed entries)'
 
