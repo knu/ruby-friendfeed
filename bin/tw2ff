@@ -11,6 +11,7 @@ require 'rubygems'
 require 'digest'
 require 'friendfeed'
 require 'friendfeed/unofficial'
+require 'friendfeed/v2'
 require 'main'
 require 'mechanize'
 require 'uri'
@@ -121,6 +122,15 @@ def friendfeed_client
       password = Config('friendfeed.password')
       putinfo 'Logging in to FriendFeed as %s', username
       FriendFeed::Client.new.login(username, password)
+    end
+end
+
+def friendfeedv2_client
+  $ffv2_client ||=
+    begin
+      ffcli = friendfeed_client()
+      httpauth = FriendFeed::V2::HTTPAuth.new(ffcli.nickname, ffcli.remote_key)
+      FriendFeed::V2::Client.new(httpauth)
     end
 end
 
@@ -399,35 +409,55 @@ to see if someone is joining FriendFeed:
     def run
       require 'set'
 
+      ffv2cli = friendfeedv2_client
+
       ffcli = friendfeed_client()
       ff_me = ffcli.nickname
 
       twcli = twitter_client()
 
       favorited = Set[]
+      ffim_favorited = Set[]
 
       twcli.favorites.each { |favorite|
-        id = favorite['id']
-        # p [id, favorite.user.screen_name]
+        id = favorite.id
+        if m = favorite.text.match(%r{http://ff\.im/([A-Za-z0-9]+)})
+          ffim_favorited << [id, favorite.user.screen_name, m[1]]
+        end
         favorited << id
       }
 
       liked = Set[]
-      tw_url = {}
+      tw_uri = {}
+      nontw_liked = Set[]
+      feedinfo = {}
 
-      ffcli.get_user_liked_entries(nil, 'service' => 'twitter').each { |like|
-        url = like['link']
-        case TWITTER_URI.route_to(url).to_s
-        when %r{\A([A-Za-z0-9_]+)/statuses/([0-9]+)\z}
-          id = $2.to_i
-          liked << id
-          tw_url[id] = url
+      ffv2cli = friendfeedv2_client
+
+      ffv2cli.get_feed([ff_me, :likes]).entries.each { |entry|
+        via = entry.via or next
+        case via.name
+        when 'Twitter'
+          uri = via.url
+          case TWITTER_URI.route_to(uri).to_s
+          when %r{\A([A-Za-z0-9_]+)/statuses/([0-9]+)\z}
+            id = $2.to_i
+            liked << id
+            tw_uri[id] = uri
+            next
+          end
+        end
+        # The entry is not from Twitter
+        user = entry.from.id
+        info = (feedinfo[user] ||= ffv2cli.get_feedinfo(user))
+        if twitter = info.services.find { |service| service.id == 'twitter' }
+          nontw_liked << [entry, twitter.username]
         end
       }
 
       # Favorite FriendFeed-liked entry in Twitter
       (liked - favorited).each { |id|
-        putinfo "Adding a favorite in Twitter: %s", tw_url[id]
+        putinfo "Adding a favorite in Twitter: %s", tw_uri[id]
         begin
           twcli.favorite_create(id)
         rescue
@@ -460,6 +490,37 @@ to see if someone is joining FriendFeed:
           ffcli.add_like(entryid)
           liked << id
         end
+      }
+
+      ffim_favorited.each { |id, name, short_id|
+        next if liked.include?(id)
+        next if nontw_liked.reject! { |entry, username| entry.short_id == short_id }
+
+        entry = ffv2cli.decode_short(short_id) or next
+        user = entry.from.id
+        info = (feedinfo[user] ||= ffv2cli.get_feedinfo(user))
+        twitter = info.services.find { |service| service.id == 'twitter' } or next
+        if twitter.username == name
+          putinfo "Adding a like in FriendFeed: %s", entry['link']
+          ffcli.add_like(entry.id)
+          liked << id
+        end
+      }
+      nontw_liked.each { |entry, nickname|
+        search = Twitter::Search.new
+        search.from(nickname)
+        search.contains(entry.short_url.to_s)
+        search.each { |result|
+          id = result.id
+          uri = TWITTER_URI + '%s/statuses/%d' % [result.from_user, result.id]
+          putinfo "Adding a favorite in Twitter: %s", uri
+          begin
+            twcli.favorite_create(id)
+            liked << id
+          rescue
+            # Maybe already favorited
+          end
+        }
       }
     end
   end
