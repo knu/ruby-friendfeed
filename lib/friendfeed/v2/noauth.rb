@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 #--
-# friendfeed/v2/noauth.rb - represents a non-authenticated HTTP client
+# friendfeed/v2/noauth.rb - represents a non-authenticated HTTP agent
 #++
 # Copyright (c) 2010 Akinori MUSHA <knu@iDaemons.org>
 #
@@ -12,7 +12,7 @@ require 'mechanize'
 
 module FriendFeed
   module V2
-    # Represents a non-authenticated HTTP client
+    # Represents a non-authenticated HTTP agent
     class NoAuth
       def initialize(options = nil)
         @mechanize = Mechanize.new

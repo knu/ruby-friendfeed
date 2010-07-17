@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 #--
-# friendfeed/v2/basicauth.rb - represents a basic-authenticated HTTP client
+# friendfeed/v2/basicauth.rb - represents a basic-authenticated HTTP agent
 #++
 # Copyright (c) 2010 Akinori MUSHA <knu@iDaemons.org>
 #
@@ -12,9 +12,9 @@ require 'friendfeed/v2/noauth'
 
 module FriendFeed
   module V2
-    # Represents a basic-authenticated HTTP client.
+    # Represents a basic-authenticated HTTP agent.
     class BasicAuth < NoAuth
-      # Creates a basic-authenticated HTTP client, with given
+      # Creates a basic-authenticated HTTP agent, with given
       # +username+ and +remotekey+.
       def initialize(username, remotekey, options = nil)
         super(options)

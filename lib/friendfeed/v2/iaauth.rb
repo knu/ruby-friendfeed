@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 #--
-# friendfeed/v2/iaauth.rb - represents an Installed Application Auth client
+# friendfeed/v2/iaauth.rb - represents an Installed Application Auth agent
 #++
 # Copyright (c) 2010 Akinori MUSHA <knu@iDaemons.org>
 #
@@ -13,7 +13,7 @@ require 'friendfeed/v2/oauth_helper'
 
 module FriendFeed
   module V2
-    # Represents an Installed Application Auth client.
+    # Represents an Installed Application Auth agent.
     #
     # Example usage:
     #   iaauth = FriendFeed::V2::IAAuth.new([ia_key, ia_secret])
@@ -32,7 +32,7 @@ module FriendFeed
     #   client = FriendFeed::V2::Client(iaauth)
     #   # ... Enjoy! ...
     class IAAuth < NoAuth
-      # Creates an authentication client for an installed application
+      # Creates an authentication agent for an installed application
       # with +consumer_token+ and optional +access_token+, which can
       # be obtained by calling the +get_ia_access_token+ method.
       def initialize(consumer_token, access_token = nil, options = nil)
