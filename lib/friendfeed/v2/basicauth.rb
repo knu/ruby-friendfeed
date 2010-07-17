@@ -15,17 +15,15 @@ module FriendFeed
     # Represents a basic-authenticated HTTP client.
     class BasicAuth < NoAuth
       # Creates a basic-authenticated HTTP client, with given
-      # +username+ and +password+.  Note that +password+ must be the
-      # user's remote key if this client is used for the official
-      # FriendFeed API.
-      def initialize(username, password, options = nil)
+      # +username+ and +remotekey+.
+      def initialize(username, remotekey, options = nil)
         super(options)
-        @mechanize.auth(username, password)
+        @mechanize.auth(username, remotekey)
         @username = username
-        @password = password
+        @remotekey = remotekey
       end
 
-      attr_accessor :username, :password
+      attr_accessor :username, :remotekey
     end
   end
 end
