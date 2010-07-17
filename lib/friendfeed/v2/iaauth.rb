@@ -34,7 +34,7 @@ module FriendFeed
     class IAAuth < NoAuth
       # Creates an authentication client for an installed application
       # with +consumer_token+ and optional +access_token+, which can
-      # be obtained by calling the +get_is_access_token+ method.
+      # be obtained by calling the +get_ia_access_token+ method.
       def initialize(consumer_token, access_token = nil, options = nil)
         if access_token.is_a?(Hash)
           options, access_token = access_token, nil
