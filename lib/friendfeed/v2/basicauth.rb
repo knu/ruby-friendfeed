@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 #--
-# friendfeed/v2/httpauth.rb - represents a basic-authenticated HTTP client
+# friendfeed/v2/basicauth.rb - represents a basic-authenticated HTTP client
 #++
 # Copyright (c) 2010 Akinori MUSHA <knu@iDaemons.org>
 #
@@ -13,7 +13,7 @@ require 'friendfeed/v2/noauth'
 module FriendFeed
   module V2
     # Represents a basic-authenticated HTTP client.
-    class HTTPAuth < NoAuth
+    class BasicAuth < NoAuth
       # Creates a basic-authenticated HTTP client, with given
       # +username+ and +password+.  Note that +password+ must be the
       # user's remote key if this client is used for the official

@@ -129,7 +129,7 @@ def friendfeedv2_client
   $ffv2_client ||=
     begin
       ffcli = friendfeed_client()
-      httpauth = FriendFeed::V2::HTTPAuth.new(ffcli.nickname, ffcli.remote_key)
+      httpauth = FriendFeed::V2::BasicAuth.new(ffcli.nickname, ffcli.remote_key)
       FriendFeed::V2::Client.new(httpauth)
     end
 end
@@ -155,7 +155,7 @@ def twitter_client
       username = Config('twitter.username')
       password = Config('twitter.password')
       putinfo 'Logging in to Twitter as %s', username
-      Twitter::Base.new(Twitter::HTTPAuth.new(username, password))
+      Twitter::Base.new(Twitter::BasicAuth.new(username, password))
     end
 end
 
