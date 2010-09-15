@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+$:.unshift('./lib')
+require 'friendfeed'
+require 'pp'
+
+httpauth = FriendFeed::V2::BasicAuth.new('knu', 'crate972scuds')
+cli = FriendFeed::V2::Client.new(httpauth)
+
+#p cli.get_feedinfo('911ea91515e14581941a3f0e7c1e1e42').services
+p cli.get_feedinfo('knu').services
+
+#puts "---"
+
+#p cli.get_feed('911ea91515e14581941a3f0e7c1e1e42')

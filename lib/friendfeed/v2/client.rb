@@ -143,6 +143,7 @@ module FriendFeed
     end
 
     autoload :BasicAuth, 'friendfeed/v2/basicauth'
-    autoload :IAAuth, 'friendfeed/v2/iaauth'
+    autoload :IAAuth,    'friendfeed/v2/iaauth'
+    autoload :WebAuth,   'friendfeed/v2/webauth'
   end
 end
