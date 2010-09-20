@@ -12,6 +12,7 @@ require 'digest'
 require 'friendfeed'
 require 'friendfeed/unofficial'
 require 'friendfeed/v2'
+require 'highline'
 require 'main'
 require 'mechanize'
 require 'uri'
@@ -35,42 +36,29 @@ def ConfigDir()
     end
 end
 
-def ConfigFile()
-  $config_file ||= File.join(ConfigDir(), 'config.yml')
+class StatusStore
+  def initialize(path)
+    @status = YAML::Store.new(path)
+  end
+
+  def method_missing(name, value = nil)
+    key = name.to_s
+    if key.chomp!('=')
+      @status.transaction(false) {
+        @status[key] = value
+      }
+    else
+      @status.transaction(true) {
+        @status[key]
+      }
+    end
+  end
 end
 
-def Config(keypath, default = :omitted)
-  $config ||= YAML.load_file(ConfigFile())
-
-  keypath.split('.').inject($config) { |hash, key|
-    hash.is_a?(Hash) or raise TypeError
-    hash.fetch(key)
-  }
-rescue => e
-  return default if default != :omitted
-  
-  STDERR.print <<EOM
-The key "#{keypath}" is missing in #{ConfigFile()}.
-Please run "#{$0} config" and fill out necessary information.
-EOM
-  exit 1
-end
+Status = StatusStore.new(File.join(ConfigDir(), 'status.yml'))
 
 def putinfo(fmt, *args)
   STDERR.puts sprintf(fmt, *args)
-end
-
-def Status(key)
-  $status ||= YAML::Store.new(File.join(ConfigDir(), 'status.yml'))
-  if block_given?
-    $status.transaction(false) {
-      return $status[key] = yield
-    }
-  else
-    $status.transaction(true) {
-      return $status[key]
-    }
-  end
 end
 
 def agent
@@ -115,21 +103,38 @@ class FriendFeed::Client
   end
 end
 
-def friendfeed_client
-  $ff_client ||=
-    begin
-      username = Config('friendfeed.username')
-      password = Config('friendfeed.password')
-      putinfo 'Logging in to FriendFeed as %s', username
-      FriendFeed::Client.new.login(username, password)
+def get_friendfeed_client
+  username, password = Status.friendfeed_userpass
+  begin
+    username && password or raise 'FriendFeed login information required'
+    putinfo 'Logging in to FriendFeed as %s', username
+    return FriendFeed::Client.new.login(username, password)
+  rescue => e
+    putinfo '%s', e.to_s
+    HighLine.new.tap { |hl|
+      username = hl.ask('Login: ') { |q|
+        q.default = username
+      }
+      password = hl.ask('Password: ') { |q|
+        q.echo = false
+      }
+    }
+    retry
+  ensure
+    if e
+      Status.friendfeed_userpass = [username, password]
     end
+  end
+end
+
+def friendfeed_client
+  $ff_client ||= get_friendfeed_client
 end
 
 def friendfeedv2_client
   $ffv2_client ||=
     begin
-      ffcli = friendfeed_client()
-      httpauth = FriendFeed::V2::BasicAuth.new(ffcli.nickname, ffcli.remote_key)
+      httpauth = FriendFeed::V2::BasicAuth.new(friendfeed_client.nickname, friendfeed_client.remote_key)
       FriendFeed::V2::Client.new(httpauth)
     end
 end
@@ -149,14 +154,47 @@ class Twitter::Base
   end
 end
 
+def get_twitter_oauth
+  ckey, csecret = Status.twitter_consumer
+  if !ckey || !csecret
+    putinfo 'Twitter consumer key & secret required'
+    HighLine.new.tap { |hl|
+      ckey = hl.ask('Consumer key: ')
+      csecret = hl.ask('Consumer secret: ') { |q|
+        q.echo = false
+      }
+    }
+    Status.twitter_consumer = [ckey, csecret]
+  end
+  Twitter::OAuth.new(ckey, csecret)
+end
+
+def get_twitter_access(oauth)
+  request = oauth.consumer.get_request_token
+  if system('open', request.authorize_url)
+    putinfo 'Web browser is opened.'
+  else
+    putinfo 'Open %s with a web browser.', request.authorize_url
+  end
+  pin = HighLine.new.ask('Grant access and input the 7-digit PIN here: ')
+  Status.twitter_access = oauth.authorize_from_request(request.token, request.secret, pin)
+end
+
+def get_twitter_client
+  oauth = get_twitter_oauth
+  atoken, asecret = Status.twitter_access
+  begin
+    atoken && asecret or raise 'Twitter access authorization required'
+    oauth.authorize_from_access(atoken, asecret)
+  rescue => e
+    putinfo '%s.', e.to_s
+    get_twitter_access(oauth)
+  end
+  Twitter::Base.new(oauth)
+end
+
 def twitter_client
-  $tw_client ||=
-    begin
-      username = Config('twitter.username')
-      password = Config('twitter.password')
-      putinfo 'Logging in to Twitter as %s', username
-      Twitter::Base.new(Twitter::BasicAuth.new(username, password))
-    end
+  $tw_client ||= get_twitter_client
 end
 
 Main {
@@ -164,28 +202,6 @@ Main {
 
   def run
     print usage.to_s
-  end
-
-  mode 'config' do
-    description 'Edit the configuration file'
-
-    def run
-      if !File.exist?(ConfigFile())
-        File.open(ConfigFile(), 'w') { |f|
-          f.print <<EOF
---- 
-friendfeed: 
-  username: "username"
-  password: "password"
-twitter: 
-  username: "username"
-  password: "password"
-EOF
-        }
-      end
-
-      system ENV['VISUAL'] || ENV['EDITOR'] || 'vi', ConfigFile()
-    end
   end
 
   mode 'follow' do
@@ -213,7 +229,7 @@ EOF
       names.each { |name|
         twuser =
           begin
-            twitter_client().user(name)
+            twitter_client.user(name)
           rescue Twitter::NotFound
             putinfo 'Twitter user not found: %s', name
             next
@@ -227,7 +243,7 @@ EOF
         end
 
         putinfo 'Creating an imaginary friend for %s', name
-        friendfeed_client().follow_twitter_user(name, name_format % name,
+        friendfeed_client.follow_twitter_user(name, name_format % name,
           twuser.profile_image_url)
       }
     end
@@ -248,13 +264,11 @@ EOF
 
       name_format = params['name-format'].value
 
-      ffcli = friendfeed_client()
-
       subscribed_real = Set[]
       subscribed_imag = Set[]
 
       putinfo "Checking real friends in FriendFeed..."
-      ffcli.get_real_friends.each { |profile|
+      friendfeed_client.get_real_friends.each { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
@@ -265,7 +279,7 @@ EOF
       }
 
       putinfo "Checking imaginary friends in FriendFeed..."
-      ffcli.get_imaginary_friends.each { |profile|
+      friendfeed_client.get_imaginary_friends.each { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
@@ -276,8 +290,8 @@ EOF
       }
 
       putinfo "Checking groups in FriendFeed..."
-      ffcli.get_profile['rooms'].each { |room|
-        ffcli.get_services(room['nickname']).each { |service|
+      friendfeed_client.get_profile['rooms'].each { |room|
+        friendfeed_client.get_services(room['nickname']).each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             putinfo 'Found a Twitter friend %s in FriendFeed (group)', name
@@ -286,8 +300,8 @@ EOF
         }
       }
 
-      Status('friends_subscribed_real') { subscribed_real.sort }
-      Status('friends_subscribed_imag') { subscribed_imag.sort }
+      Status.friends_subscribed_real = subscribed_real.sort
+      Status.friends_subscribed_imag = subscribed_imag.sort
 
       (subscribed_real & subscribed_imag).each { |name|
         putinfo 'Duplicated subscription: %s', name
@@ -300,7 +314,7 @@ EOF
       to_watch = Set[]
       picture_urls = {}
 
-      twitter_client().all_friends.each { |friend|
+      twitter_client.all_friends.each { |friend|
         name = friend.screen_name.downcase
         friends << name
         next if subscribed.include?(name)
@@ -312,11 +326,11 @@ EOF
           picture_urls[name] = friend.profile_image_url
         end
       }
-      twitter_me = Config('twitter.username')
+      twitter_me = twitter_client.verify_credentials.screen_name
       friends << twitter_me
 
-      Status('friends') { friends.sort }
-      Status('friends_to_watch') { to_watch.sort }
+      Status.friends = friends.sort
+      Status.friends_to_watch = to_watch.sort
 
       to_watch.each { |name|
         putinfo 'Skipping a protected user %s', name
@@ -324,7 +338,7 @@ EOF
 
       to_subscribe.each { |name|
         putinfo 'Creating an imaginary friend for %s', name
-        friendfeed_client().follow_twitter_user(name, name_format % name,
+        friendfeed_client.follow_twitter_user(name, name_format % name,
           picture_urls[name])
       }
 
@@ -341,19 +355,15 @@ to see if someone is joining FriendFeed:
     description 'Update imaginary friends icons with those of their Twitter accounts'
 
     def run
-      twcli = twitter_client()
-
       picture_urls = {}
 
-      twcli.all_friends.each { |friend|
+      twitter_client.all_friends.each { |friend|
         name = friend.screen_name.downcase
         picture_urls[name] = friend.profile_image_url
       }
 
-      ffcli = friendfeed_client()
-
       putinfo "Checking imaginary friends in FriendFeed..."
-      ffcli.get_imaginary_friends.each { |profile|
+      friendfeed_client.get_imaginary_friends.each { |profile|
         profile['services'].each { |service|
           url = service['profileUrl'] or next
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
@@ -361,7 +371,7 @@ to see if someone is joining FriendFeed:
             if picture_urls.key?(name)
               url = picture_urls[name]
             else
-              friend = twcli.user(name) rescue
+              friend = twitter_client.user(name) rescue
                 begin
                   putinfo "Failed to get profile of %s", name
                   next
@@ -370,7 +380,7 @@ to see if someone is joining FriendFeed:
             end
             id = profile['id']
             putinfo 'Changing the picture of %s', name
-            ffcli.change_picture_to_url(id, url)
+            friendfeed_client.change_picture_to_url(id, url)
           end
         }
       }
@@ -381,19 +391,17 @@ to see if someone is joining FriendFeed:
     description 'Fix imaginary friends to include @replies'
 
     def run
-      ffcli = friendfeed_client()
-
       putinfo "Checking imaginary friends in FriendFeed..."
-      ffcli.get_imaginary_friends.each { |profile|
+      friendfeed_client.get_imaginary_friends.each { |profile|
         id = profile['id']
-        ffcli.get_services(id).each { |service|
+        friendfeed_client.get_services(id).each { |service|
           url = service['profileUrl'] or next
 
           if (name = TWITTER_URI.route_to(url).to_s).match(/\A[A-Za-z0-9_]+\z/)
             name.downcase!
             putinfo 'Trying to include @replies by %s', name
             begin
-              ffcli.edit_service(id, service['serviceid'], 'includeatreplies' => 'on')
+              friendfeed_client.edit_service(id, service['serviceid'], 'includeatreplies' => 'on')
             rescue => e
               putinfo 'Failed, maybe due to the Twitter account removal or a network problem.'
             end
@@ -409,17 +417,12 @@ to see if someone is joining FriendFeed:
     def run
       require 'set'
 
-      ffv2cli = friendfeedv2_client
-
-      ffcli = friendfeed_client()
-      ff_me = ffcli.nickname
-
-      twcli = twitter_client()
+      ff_me = friendfeed_client.nickname
 
       favorited = Set[]
       ffim_favorited = Set[]
 
-      twcli.favorites.each { |favorite|
+      twitter_client.favorites.each { |favorite|
         id = favorite.id
         if m = favorite.text.match(%r{http://ff\.im/([A-Za-z0-9]+)})
           ffim_favorited << [id, favorite.user.screen_name, m[1]]
@@ -432,9 +435,7 @@ to see if someone is joining FriendFeed:
       nontw_liked = Set[]
       feedinfo = {}
 
-      ffv2cli = friendfeedv2_client
-
-      ffv2cli.get_feed([ff_me, :likes]).entries.each { |entry|
+      friendfeedv2_client.get_feed([ff_me, :likes]).entries.each { |entry|
         via = entry.via or next
         case via.name
         when 'Twitter'
@@ -449,7 +450,7 @@ to see if someone is joining FriendFeed:
         end
         # The entry is not from Twitter
         user = entry.from.id
-        info = (feedinfo[user] ||= ffv2cli.get_feedinfo(user))
+        info = (feedinfo[user] ||= friendfeedv2_client.get_feedinfo(user))
         if twitter = info.services.find { |service| service.id == 'twitter' }
           nontw_liked << [entry, twitter.username]
         end
@@ -459,7 +460,7 @@ to see if someone is joining FriendFeed:
       (liked - favorited).each { |id|
         putinfo "Adding a favorite in Twitter: %s", tw_uri[id]
         begin
-          twcli.favorite_create(id)
+          twitter_client.favorite_create(id)
         rescue
           # Maybe already favorited a long ago
         end
@@ -467,8 +468,8 @@ to see if someone is joining FriendFeed:
 
       # Find Twitter-liked entries in FriendFeed that aren't liked yet
       (
-        ffcli.get_user_friend_entries(nil, 'service' => 'twitter') +
-        ffcli.get_user_discussed_entries(nil, 'service' => 'twitter')
+        friendfeed_client.get_user_friend_entries(nil, 'service' => 'twitter') +
+        friendfeed_client.get_user_discussed_entries(nil, 'service' => 'twitter')
         # Currently imaginary friends entries are not checked
       ).sort_by { |entry|
         entry["published"]
@@ -487,7 +488,7 @@ to see if someone is joining FriendFeed:
         if favorited.include?(id)
           entryid = entry['id']
           putinfo "Adding a like in FriendFeed: %s", entry['link']
-          ffcli.add_like(entryid)
+          friendfeed_client.add_like(entryid)
           liked << id
         end
       }
@@ -496,13 +497,13 @@ to see if someone is joining FriendFeed:
         next if liked.include?(id)
         next if nontw_liked.reject! { |entry, username| entry.short_id == short_id }
 
-        entry = ffv2cli.decode_short(short_id) or next
+        entry = friendfeedv2_client.decode_short(short_id) or next
         user = entry.from.id
-        info = (feedinfo[user] ||= ffv2cli.get_feedinfo(user))
+        info = (feedinfo[user] ||= friendfeedv2_client.get_feedinfo(user))
         twitter = info.services.find { |service| service.id == 'twitter' } or next
         if twitter.username == name
           putinfo "Adding a like in FriendFeed: %s", entry['link']
-          ffcli.add_like(entry.id)
+          friendfeed_client.add_like(entry.id)
           liked << id
         end
       }
@@ -515,7 +516,7 @@ to see if someone is joining FriendFeed:
           uri = TWITTER_URI + '%s/statuses/%d' % [result.from_user, result.id]
           putinfo "Adding a favorite in Twitter: %s", uri
           begin
-            twcli.favorite_create(id)
+            twitter_client.favorite_create(id)
             liked << id
           rescue
             # Maybe already favorited
@@ -562,9 +563,9 @@ to see if someone is joining FriendFeed:
           rss.channel.link = 'http://twitter.com/replies'
           rss.channel.description = 'Twitter replies'
 
-          friends = Status('friends').to_set
+          friends = Status.friends.to_set
 
-          twitter_client().mentions.each { |reply|
+          twitter_client.mentions.each { |reply|
             user = reply.user
             next if !include_protected && user.protected
             name = user.screen_name
@@ -600,12 +601,12 @@ to see if someone is joining FriendFeed:
 
       filename = params['filename'].value
 
-      friends = Status('friends').to_set
-      friends_subscribed_real = Status('friends_subscribed_real').to_set
+      friends = Status.friends.to_set
+      friends_subscribed_real = Status.friends_subscribed_real.to_set
 
       items = []
 
-      twitter_client().mentions.each { |reply|
+      twitter_client.mentions.each { |reply|
         user = reply.user
         next if !user.protected
         name = user.screen_name
@@ -617,7 +618,7 @@ to see if someone is joining FriendFeed:
         items << [timestamp, text, url]
       }
 
-      twitter_client().friends_timeline.each { |status| 
+      twitter_client.friends_timeline.each { |status| 
         user = status.user
         next if !user.protected
         name = user.screen_name
@@ -671,9 +672,7 @@ to see if someone is joining FriendFeed:
           rss.channel.link = 'http://twitter.com/retweeted_of_mine'
           rss.channel.description = 'Twitter posts retweeted by others'
 
-          twcli = twitter_client()
-
-          twcli.retweets_of_me.each { |tweet|
+          twitter_client.retweets_of_me.each { |tweet|
             user = tweet.user
             name = user.screen_name
             text = tweet.text
@@ -696,12 +695,11 @@ to see if someone is joining FriendFeed:
     description 'Urge FriendFeed to refresh services (import feed entries)'
 
     def run
-      ffcli = friendfeed_client()
-      profile = ffcli.get_profile
+      profile = friendfeed_client.get_profile
 
-      ffcli.get_services.each { |service|
+      friendfeed_client.get_services.each { |service|
         putinfo "Refreshing %s..." % service['service']
-        ffcli.refresh_service(profile['id'], service['serviceid'], service['service'])
+        friendfeed_client.refresh_service(profile['id'], service['serviceid'], service['service'])
       }
     end
   end
